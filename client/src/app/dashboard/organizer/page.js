@@ -196,20 +196,32 @@ function OrganizerDashboard() {
                  <p className="text-xs text-gray-500 font-medium tracking-wider uppercase mt-1">Dashboard</p>
                </div>
 
-               <nav className="space-y-2">
-                 <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
+               <nav className="space-y-3">
+                 <button 
+                    onClick={() => setActiveTab('dashboard')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 outline-none focus:outline-none ${activeTab === 'dashboard' ? 'bg-white/60 text-indigo-700 shadow-md border border-white/60 backdrop-blur-md font-bold' : 'text-gray-600 font-medium hover:bg-white/30 hover:text-indigo-600 border border-transparent hover:shadow-sm'}`}
+                 >
                     <DashboardIcon /> Overview
                  </button>
-                 <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'events' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
+                 <button 
+                    onClick={() => setActiveTab('events')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 outline-none focus:outline-none ${activeTab === 'events' ? 'bg-white/60 text-indigo-700 shadow-md border border-white/60 backdrop-blur-md font-bold' : 'text-gray-600 font-medium hover:bg-white/30 hover:text-indigo-600 border border-transparent hover:shadow-sm'}`}
+                 >
                     <EventIcon /> My Events
                  </button>
-                 <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'create' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
+                 <button 
+                    onClick={() => setActiveTab('create')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 outline-none focus:outline-none ${activeTab === 'create' ? 'bg-white/60 text-indigo-700 shadow-md border border-white/60 backdrop-blur-md font-bold' : 'text-gray-600 font-medium hover:bg-white/30 hover:text-indigo-600 border border-transparent hover:shadow-sm'}`}
+                 >
                     <PlusIcon /> Create Event
                  </button>
                </nav>
             </div>
             
-            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/20 hover:bg-white/40 border border-white/30 text-gray-700 transition-all text-sm font-medium`}>
+            <button 
+                onClick={async () => { await logout(); router.push('/login'); }} 
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/20 hover:bg-white/50 border border-white/30 hover:border-white/60 text-gray-700 hover:text-indigo-700 transition-all text-sm font-bold shadow-sm outline-none focus:outline-none"
+            >
                 <LogOutIcon /> Sign Out
             </button>
           </aside>
@@ -299,7 +311,7 @@ function OrganizerDashboard() {
                     {organizerEvents.map((ev) => (
                         <div key={ev._id} className={`${glassCard} p-5 flex flex-col md:flex-row items-center justify-between gap-4 group hover:border-indigo-300/50 transition`}>
                             <div className="flex items-center gap-4 w-full md:w-auto">
-                                <div className="h-16 w-16 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0">
+                                <div className="h-16 w-16 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0 shadow-sm">
                                     {ev.image ? <img src={ev.image} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-indigo-100 flex items-center justify-center text-indigo-400"><EventIcon/></div>}
                                 </div>
                                 <div>
@@ -319,7 +331,7 @@ function OrganizerDashboard() {
                                     <div className="text-xs text-gray-500 uppercase">Stock</div>
                                     <div className="font-bold text-gray-700">{ev.remainingTickets} / {ev.totalTickets}</div>
                                 </div>
-                                <button onClick={() => handleDeleteEvent(ev._id)} className="p-2 bg-red-100/50 hover:bg-red-200/50 text-red-600 rounded-xl transition border border-red-200">
+                                <button onClick={() => handleDeleteEvent(ev._id)} className="p-2 bg-red-100/50 hover:bg-red-200/80 text-red-600 rounded-xl transition border border-red-200 outline-none focus:outline-none">
                                     <TrashIcon />
                                 </button>
                             </div>
@@ -337,110 +349,113 @@ function OrganizerDashboard() {
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Create New Event</h2>
                     <form onSubmit={handleCreateSubmit} className="space-y-6">
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Event Name</label>
-                                <input required type="text" className={glassInput} placeholder="Event Name" 
+                                <input required type="text" className={`${glassInput} w-full`} placeholder="Event Name" 
                                     value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} />
                             </div>
-                            <div>
+                            
+                            <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
-                                <select className={glassSelect} value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} required>
+                                <select className={`${glassSelect} w-full`} value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} required>
                                     <option value="">Select Category</option>
                                     {["Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"].map(c => (
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                          Location
-                        </label>
-                        <input
-                          required
-                          type="text"
-                          className={glassInput}
-                          placeholder="Address"
-                          value={formData.location}
-                          onChange={e =>
-                            setFormData({ ...formData, location: e.target.value })
-                          }
-                        />
-                        <div className="mt-4">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                            Select Event Location on Map
-                          </label>
 
-                          <div className="w-full">
-                            <LocationPicker setCoordinates={setCoordinates} />
-                          </div>
-                        </div>
-                      </div>
+                            {/* LOCATION & MAP - FIXED ALIGNMENT */}
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                                  Location Address
+                                </label>
+                                <input
+                                  required
+                                  type="text"
+                                  className={`${glassInput} w-full`}
+                                  placeholder="Enter physical address"
+                                  value={formData.location}
+                                  onChange={e =>
+                                    setFormData({ ...formData, location: e.target.value })
+                                  }
+                                />
+                                
+                                <div className="mt-5 bg-white/30 p-4 md:p-6 rounded-2xl border border-white/50 shadow-sm backdrop-blur-md">
+                                  <label className="block text-xs font-bold text-gray-600 uppercase mb-4 text-center">
+                                    Pinpoint Location on Map
+                                  </label>
+                                  <div className="w-full flex justify-center items-center rounded-xl overflow-hidden shadow-inner bg-gray-100/50 min-h-[300px]">
+                                    <LocationPicker setCoordinates={setCoordinates} />
+                                  </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div  className='p-2'>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date</label>
-                                <input required type="date" className={glassInput}
+                                <input required type="date" className={`${glassInput} w-full`}
                                     value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                             </div>
-                            <div>
+                            <div  className='p-2'>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Time</label>
-                                <input required type="time" className={glassInput}
+                                <input required type="time" className={`${glassInput} w-full`}
                                     value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white/20 rounded-xl border border-white/30">
-                             <div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 bg-white/20 rounded-2xl border border-white/40 shadow-sm">
+                             <div  className='p-2'>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Price ($)</label>
-                                <input required type="number" min="0" className={glassInput}
+                                <input required type="number" min="0" className={`${glassInput} w-full`}
                                     value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
                             </div>
-                            <div>
+                            <div  className='p-2'>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Total Tickets</label>
-                                <input required type="number" min="1" className={glassInput}
+                                <input required type="number" min="1" className={`${glassInput} w-full`}
                                     value={formData.totalTickets} onChange={e => setFormData({...formData, totalTickets: e.target.value})} />
                             </div>
-                            <div>
+                            <div className='p-2'> 
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image URL</label>
-                                <input type="text" className={glassInput} placeholder="https://..."
+                                <input type="text" className={`${glassInput} w-full`} placeholder="https://..."
                                     value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
                             </div>
                         </div>
 
                         {/* Early Bird Section */}
-                        <div className="p-4 bg-indigo-50/30 rounded-xl border border-indigo-100/50">
+                        <div className="p-5 bg-indigo-50/40 rounded-2xl border border-indigo-100/60 shadow-sm backdrop-blur-sm">
                             <div className="flex items-center gap-3 mb-4">
-                                <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600" 
+                                <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600 cursor-pointer" 
                                     checked={formData.ebEnabled} onChange={e => setFormData({...formData, ebEnabled: e.target.checked})} />
-                                <label htmlFor="ebCheck" className="font-bold text-gray-700 cursor-pointer select-none">Enable Early Bird Discount</label>
+                                <label htmlFor="ebCheck" className="font-bold text-gray-800 cursor-pointer select-none">Enable Early Bird Discount</label>
                             </div>
 
                             {formData.ebEnabled && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">Discount Price</label>
-                                        <input type="number" min="0" className={glassInput} 
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in mt-4">
+                                    <div  className='p-2'>
+                                        <label className="block text-xs font-bold text-indigo-800/70 mb-2 uppercase">Discount Price</label>
+                                        <input type="number" min="0" className={`${glassInput} w-full`} 
                                             value={formData.ebPrice} onChange={e => setFormData({...formData, ebPrice: e.target.value})} />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">End Date</label>
-                                        <input type="date" className={glassInput} 
+                                    <div className='p-2'>
+                                        <label className="block text-xs font-bold text-indigo-800/70 mb-2 uppercase">End Date</label>
+                                        <input type="date" className={`${glassInput} w-full`} 
                                             value={formData.ebEndDate} onChange={e => setFormData({...formData, ebEndDate: e.target.value})} />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">Limit (Qty)</label>
-                                        <input type="number" min="0" className={glassInput} 
+                                    <div className='p-2'>
+                                        <label className="block text-xs font-bold text-indigo-800/70 mb-2 uppercase">Limit (Qty)</label>
+                                        <input type="number" min="0" className={`${glassInput} w-full`} 
                                             value={formData.ebMaxTickets} onChange={e => setFormData({...formData, ebMaxTickets: e.target.value})} />
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex gap-4 pt-4">
-                            <button type="submit" className={`flex-1 ${primaryButton}`}>Create Event</button>
-                            <button type="button" onClick={() => setActiveTab('dashboard')} className={glassButton}>Cancel</button>
+                        <div className="flex gap-4 pt-6">
+                            <button type="submit" className={`flex-1 ${primaryButton} shadow-lg shadow-indigo-200/50 outline-none focus:outline-none`}>Create Event</button>
+                            <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} outline-none focus:outline-none hover:bg-white/50`}>Cancel</button>
                         </div>
                     </form>
                 </div>
