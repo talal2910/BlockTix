@@ -22,7 +22,7 @@ function getSimilarity(s1, s2) {
   const shorterLength = shorter.length;
   if (shorterLength === 0) return 1.0;
 
-  const costs = new Array();
+  const costs = [];
   for (let i = 0; i <= longer.length; i++) {
     let lastValue = i;
     for (let j = 0; j <= shorter.length; j++) {
