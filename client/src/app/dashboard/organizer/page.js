@@ -6,6 +6,7 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import dynamic from "next/dynamic";
+import Skeleton from "@/app/components/Skeleton";
 
 // ICONS
 const DashboardIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>);
@@ -53,10 +54,10 @@ function OrganizerDashboard() {
   const glassContainer = "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden";
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
   const glassContent = "bg-transparent";
-  const glassCard = "bg-white/40 backdrop-blur-md border border-white/30 shadow-lg rounded-2xl";
-  const glassInput = "w-full p-3 bg-white/20 border border-white/30 rounded-xl focus:ring-2 focus:ring-indigo-400/70 focus:bg-white/40 outline-none transition text-gray-800 placeholder-gray-500";
-  const glassSelect = "w-full p-3 bg-white/20 border border-white/30 rounded-xl focus:ring-2 focus:ring-indigo-400/70 focus:bg-white/40 outline-none transition text-gray-800";
-  const glassButton = "px-4 py-2 bg-white/30 hover:bg-white/50 border border-white/40 rounded-xl transition text-gray-800 font-medium backdrop-blur-sm shadow-sm";
+  const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
+  const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
+  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:bg-white/15 outline-none transition text-white";
+  const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition text-white/80 font-medium backdrop-blur-sm shadow-sm";
   const primaryButton = "px-6 py-2.5 bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition font-medium backdrop-blur-sm";
 
   // --- FETCH DATA ---
@@ -278,10 +279,31 @@ function OrganizerDashboard() {
 
   // --- RENDER ---
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-white/10 backdrop-blur-sm">
-      <div className="animate-pulse flex flex-col items-center">
-        <div className="h-12 w-12 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-indigo-600 font-medium">Loading Dashboard...</p>
+    <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[850px]">
+        {/* Skeleton Sidebar */}
+        <aside className="w-full md:w-72 flex-shrink-0 flex flex-col p-6 border-r border-white/10">
+          <Skeleton className="h-8 w-3/4 mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="mt-auto pt-10">
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </aside>
+        {/* Skeleton Content */}
+        <main className="flex-1 p-6 md:p-10 space-y-8">
+          <Skeleton className="h-8 w-1/3 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <Skeleton className="h-64 w-full" />
+        </main>
       </div>
     </div>
   );
@@ -305,26 +327,26 @@ function OrganizerDashboard() {
                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                   Organizer
                 </h2>
-                <p className="text-xs text-gray-500 font-medium tracking-wider uppercase mt-1">Dashboard</p>
+                <p className="text-xs text-white/60 font-medium tracking-wider uppercase mt-1">Dashboard</p>
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('dashboard')} className={'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50'}>
+                <button onClick={() => setActiveTab('dashboard')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words">
                   <DashboardIcon /> Overview
                 </button>
-                <button onClick={() => setActiveTab('royalties')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50`}>
+                <button onClick={() => setActiveTab('royalties')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <DollarIcon /> Royalty Info
                 </button>
-                <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50`}>
+                <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <EventIcon /> My Events
                 </button>
-                <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50`}>
+                <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <PlusIcon /> Create Event
                 </button>
               </nav>
             </div>
 
-            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/20 hover:bg-white/40 border border-white/30 text-gray-700 transition-all text-sm font-medium`}>
+            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/30 border border-white/10 text-white/80 transition-all text-sm font-medium`}>
               <LogOutIcon /> Sign Out
             </button>
           </aside>
@@ -336,7 +358,7 @@ function OrganizerDashboard() {
             {activeTab === 'dashboard' && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-800">Performance Overview</h2>
+                  <h2 className="text-2xl font-bold text-white">Performance Overview</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -345,7 +367,7 @@ function OrganizerDashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
                       <DollarIcon />
                     </div>
-                    <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
+                    <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
                     <h3 className="text-3xl font-bold text-indigo-700">${analytics.totalRevenue.toLocaleString()}</h3>
                   </div>
 
@@ -354,7 +376,7 @@ function OrganizerDashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
                       <UsersIcon />
                     </div>
-                    <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Tickets Sold</p>
+                    <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Tickets Sold</p>
                     <h3 className="text-3xl font-bold text-purple-700">{analytics.totalTicketsSold}</h3>
                   </div>
 
@@ -363,18 +385,18 @@ function OrganizerDashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
                       <EventIcon />
                     </div>
-                    <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Active Events</p>
+                    <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Active Events</p>
                     <h3 className="text-3xl font-bold text-blue-700">{organizerEvents.length}</h3>
                   </div>
                 </div>
 
                 {/* Recent List */}
                 <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Events</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">Recent Events</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="text-xs text-gray-500 uppercase border-b border-gray-200/50">
+                        <tr className="text-xs text-white/60 uppercase border-b border-white/10">
                           <th className="pb-3 pl-2">Event</th>
                           <th className="pb-3">Date</th>
                           <th className="pb-3">Sales</th>
@@ -383,20 +405,20 @@ function OrganizerDashboard() {
                       </thead>
                       <tbody className="text-sm">
                         {organizerEvents.slice(0, 5).map((ev) => (
-                          <tr key={ev._id} className="border-b border-gray-100/30 hover:bg-white/20 transition">
-                            <td className="py-3 pl-2 font-medium text-gray-800">{ev.event}</td>
-                            <td className="py-3 text-gray-500">{new Date(ev.date).toLocaleDateString()}</td>
+                          <tr key={ev._id} className="border-b border-white/10 hover:bg-white/10 transition">
+                            <td className="py-3 pl-2 font-medium text-white">{ev.event}</td>
+                            <td className="py-3 text-white/60">{new Date(ev.date).toLocaleDateString()}</td>
                             <td className="py-3 font-bold text-indigo-600">{ev.totalTickets - ev.remainingTickets}</td>
                             <td className="py-3">
                               {ev.remainingTickets === 0 ?
-                                <span className="text-red-600 text-xs font-bold bg-red-100 px-2 py-1 rounded">Sold Out</span> :
-                                <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded">Active</span>}
+                                <span className="text-red-200 text-xs font-bold bg-red-500/10 px-2 py-1 rounded border border-red-400/20">Sold Out</span> :
+                                <span className="text-green-200 text-xs font-bold bg-green-500/10 px-2 py-1 rounded border border-green-400/20">Active</span>}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    {organizerEvents.length === 0 && <p className="text-center text-gray-500 py-4">No events created yet.</p>}
+                    {organizerEvents.length === 0 && <p className="text-center text-white/60 py-4">No events created yet.</p>}
                   </div>
                 </div>
               </div>
@@ -406,19 +428,17 @@ function OrganizerDashboard() {
             {activeTab === 'royalties' && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-800">Royalty Info</h2>
+                  <h2 className="text-2xl font-bold text-white">Royalty Info</h2>
                 </div>
 
                 {/* Royalty Settings (off-chain ledger) */}
                 <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-gray-800 mb-2">Royalty Settings</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Payments are handled by the platform right now (no gateway yet). When a ticket is resold, the platform credits your royalty balance here.
-                  </p>
+                  <h3 className="text-lg font-bold text-white mb-2">Royalty Settings</h3>
+                
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                  <div className="flex flex-col lg:flex-row lg:items-end gap-10 mb-4">
                     <div className="lg:col-span-2">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
                         Organizer Wallet Address
                       </label>
                       <input
@@ -432,15 +452,15 @@ function OrganizerDashboard() {
                     <button
                       onClick={saveOrganizerWallet}
                       disabled={savingWallet}
-                      className={primaryButton}
+                      className={`${primaryButton}`}
                     >
                       {savingWallet ? 'Saving...' : 'Save Wallet'}
                     </button>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                  <div className="flex flex-col lg:flex-row lg:items-end gap-10">
                     <div className="lg:col-span-2">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
                         Default Royalty (max 10%)
                       </label>
                       <input
@@ -456,7 +476,7 @@ function OrganizerDashboard() {
                         }}
                         className={glassInput}
                       />
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-white/60">
                         Saved as bps. Example: 5% = 500 bps.
                       </p>
                     </div>
@@ -464,34 +484,34 @@ function OrganizerDashboard() {
                     <button
                       onClick={saveRoyaltySettings}
                       disabled={savingRoyaltySettings}
-                      className={primaryButton}
+                      className={`${primaryButton} mb-8`}
                     >
                       {savingRoyaltySettings ? 'Saving...' : 'Save Royalty Settings'}
                     </button>
                   </div>
 
-                  <div className="mt-4 text-sm text-gray-700">
+                  <div className="mt-4 text-sm text-white/80">
                     <span className="font-semibold">Unpaid Royalty Balance:</span> Rs {Number(royaltyBalance || 0).toFixed(2)}
                   </div>
                 </div>
 
                 {/* Royalty Earnings */}
                 <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-gray-800 mb-2">Royalty Earnings</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <h3 className="text-lg font-bold text-white mb-2">Royalty Earnings</h3>
+                  <p className="text-sm text-white/70 mb-4">
                     Computed from resale history (off-chain). This helps you audit what you’ve earned.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="p-4 bg-white/30 rounded-2xl border border-white/40">
-                      <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Earned</div>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                      <div className="text-xs text-white/60 font-semibold uppercase tracking-wider">Total Earned</div>
                       <div className="text-xl font-bold text-indigo-700">Rs {Number(royaltyReport.totalRoyaltyEarned || 0).toFixed(2)}</div>
                     </div>
-                    <div className="p-4 bg-white/30 rounded-2xl border border-white/40">
-                      <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Resales</div>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                      <div className="text-xs text-white/60 font-semibold uppercase tracking-wider">Resales</div>
                       <div className="text-xl font-bold text-purple-700">{royaltyReport.resaleCount || 0}</div>
                     </div>
-                    <div className="p-4 bg-white/30 rounded-2xl border border-white/40 flex items-end justify-end">
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-end justify-end">
                       <button
                         onClick={fetchOrganizerRoyalties}
                         disabled={loadingRoyaltyReport}
@@ -505,7 +525,7 @@ function OrganizerDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="text-xs text-gray-500 uppercase border-b border-gray-200/50">
+                        <tr className="text-xs text-white/60 uppercase border-b border-white/10">
                           <th className="pb-3 pl-2">Event</th>
                           <th className="pb-3">Date</th>
                           <th className="pb-3">Royalty</th>
@@ -516,22 +536,22 @@ function OrganizerDashboard() {
                       </thead>
                       <tbody className="text-sm">
                         {(royaltyReport.recent || []).map((row, idx) => (
-                          <tr key={`${row.ticketId || 't'}-${idx}`} className="border-b border-gray-100/30 hover:bg-white/20 transition">
-                            <td className="py-3 pl-2 font-medium text-gray-800">{row.event?.event || '—'}</td>
-                            <td className="py-3 text-gray-500">
+                          <tr key={`${row.ticketId || 't'}-${idx}`} className="border-b border-white/10 hover:bg-white/10 transition">
+                            <td className="py-3 pl-2 font-medium text-white">{row.event?.event || '—'}</td>
+                            <td className="py-3 text-white/60">
                               {row.resale?.transactionDate ? new Date(row.resale.transactionDate).toLocaleString() : '—'}
                             </td>
                             <td className="py-3 font-bold text-indigo-700">Rs {Number(row.resale?.royaltyAmount || 0).toFixed(2)}</td>
-                            <td className="py-3 text-gray-700">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
-                            <td className="py-3 text-gray-600">{row.resale?.sellerId || '—'}</td>
-                            <td className="py-3 text-gray-600">{row.resale?.buyerId || '—'}</td>
+                            <td className="py-3 text-white/80">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
+                            <td className="py-3 text-white/70">{row.resale?.sellerId || '—'}</td>
+                            <td className="py-3 text-white/70">{row.resale?.buyerId || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
 
                     {(!royaltyReport.recent || royaltyReport.recent.length === 0) && (
-                      <p className="text-center text-gray-500 py-4">
+                      <p className="text-center text-white/60 py-4">
                         {loadingRoyaltyReport ? 'Loading royalty history...' : 'No resale royalties recorded yet.'}
                       </p>
                     )}
@@ -544,7 +564,7 @@ function OrganizerDashboard() {
             {activeTab === 'events' && (
               <div className="space-y-6 animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">My Events</h2>
+                  <h2 className="text-xl font-bold text-white">My Events</h2>
                   <button onClick={() => setActiveTab('create')} className={primaryButton}>+ Create New</button>
                 </div>
 
@@ -552,16 +572,16 @@ function OrganizerDashboard() {
                   {organizerEvents.map((ev) => (
                     <div key={ev._id} className={`${glassCard} p-5 flex flex-col md:flex-row items-center justify-between gap-4 group hover:border-indigo-300/50 transition`}>
                       <div className="flex items-center gap-4 w-full md:w-auto">
-                        <div className="h-16 w-16 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0 shadow-sm relative">
+                        <div className="h-16 w-16 rounded-xl bg-white/5 overflow-hidden flex-shrink-0 shadow-sm relative border border-white/10">
                           {ev.image ? (
                             <Image src={ev.image} alt="" fill sizes="64px" className="object-cover" />
                           ) : (
-                            <div className="h-full w-full bg-indigo-100 flex items-center justify-center text-indigo-400"><EventIcon /></div>
+                            <div className="h-full w-full bg-white/5 flex items-center justify-center text-white/60"><EventIcon /></div>
                           )}
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-800 text-lg">{ev.event}</h4>
-                          <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                          <h4 className="font-bold text-white text-lg">{ev.event}</h4>
+                          <div className="flex gap-3 text-xs text-white/60 mt-1">
                             <span>{new Date(ev.date).toLocaleDateString()}</span>
                             <span>•</span>
                             <span>{ev.time}</span>
@@ -573,139 +593,139 @@ function OrganizerDashboard() {
 
                       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                         <div className="text-right mr-4">
-                          <div className="text-xs text-gray-500 uppercase">Stock</div>
-                          <div className="font-bold text-gray-700">{ev.remainingTickets} / {ev.totalTickets}</div>
+                          <div className="text-xs text-white/60 uppercase">Stock</div>
+                          <div className="font-bold text-white/80">{ev.remainingTickets} / {ev.totalTickets}</div>
                         </div>
-                        <button onClick={() => handleDeleteEvent(ev._id)} className="p-2 bg-red-100/50 hover:bg-red-200/50 text-red-600 rounded-xl transition border border-red-200">
+                        <button onClick={() => handleDeleteEvent(ev._id)} className="p-2 bg-red-500/10 hover:bg-red-500/15 text-red-200 rounded-xl transition border border-red-400/20">
                           <TrashIcon />
                         </button>
                       </div>
                     </div>
                   ))}
-                  {organizerEvents.length === 0 && <div className="text-center py-10 text-gray-500">You have not created any events yet.</div>}
+                  {organizerEvents.length === 0 && <div className="text-center py-10 text-white/60">You have not created any events yet.</div>}
                 </div>
               </div>
             )}
 
-           {/* --- TAB 3: CREATE EVENT FORM --- */}
-{activeTab === 'create' && (
-  <div className="animate-fade-in max-w-4xl mx-auto pb-10">
-    <div className={`${glassCard} p-6 md:p-10`}>
-        <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b border-white/30 pb-4">Create New Event</h2>
-        <form onSubmit={handleCreateSubmit} className="space-y-8">
-            
-            {/* Top Section: Name and Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Event Name</label>
-                    <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="e.g. Summer Music Festival" 
-                        value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} />
-                </div>
-                
-                <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Category</label>
-                    <select className={`${glassSelect} w-full py-3 px-4`} value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} required>
-                        <option value="">Select Category</option>
-                        {["Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"].map(c => (
-                            <option key={c} value={c}>{c}</option>
-                        ))}
-                    </select>
-                </div>
+            {/* --- TAB 3: CREATE EVENT FORM --- */}
+            {activeTab === 'create' && (
+              <div className="animate-fade-in max-w-4xl mx-auto pb-10">
+                <div className={`${glassCard} p-6 md:p-10`}>
+                  <h2 className="text-2xl font-bold text-white mb-8 border-b border-white/10 pb-4">Create New Event</h2>
+                  <form onSubmit={handleCreateSubmit} className="space-y-8">
 
-                {/* Location Section - Full Width to prevent squashing */}
-                <div className="md:col-span-2 space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Location Address</label>
-                        <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="Enter physical address"
-                          value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
-                    </div>
-                    
-                    <div className="bg-white/30 p-4 rounded-2xl border border-white/50 shadow-sm backdrop-blur-md">
-                      <label className="block text-xs font-bold text-gray-600 uppercase mb-3 text-center">Pinpoint Location</label>
-                      <div className="w-full rounded-xl overflow-hidden shadow-inner bg-gray-100/50 min-h-[320px] flex justify-center">
-                        <LocationPicker setCoordinates={setCoordinates} />
+                    {/* Top Section: Name and Category */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Event Name</label>
+                        <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="e.g. Summer Music Festival"
+                          value={formData.event} onChange={e => setFormData({ ...formData, event: e.target.value })} />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Category</label>
+                        <select className={`${glassSelect} w-full py-3 px-4`} value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} required>
+                          <option value="">Select Category</option>
+                          {["Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"].map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Location Section - Full Width to prevent squashing */}
+                      <div className="md:col-span-2 space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Location Address</label>
+                          <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="Enter physical address"
+                            value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
+                        </div>
+
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-sm backdrop-blur-md">
+                          <label className="block text-xs font-bold text-white/70 uppercase mb-3 text-center">Pinpoint Location</label>
+                          <div className="w-full rounded-xl overflow-hidden shadow-inner bg-white/5 min-h-[320px] flex justify-center border border-white/10">
+                            <LocationPicker setCoordinates={setCoordinates} />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Date and Time - Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2 px-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase ml-1">Date</label>
-                    <input required type="date" className={`${glassInput} w-full py-3 px-4`}
-                        value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
-                </div>
-                <div className="space-y-2 px-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase ml-1">Time</label>
-                    <input required type="time" className={`${glassInput} w-full py-3 px-4`}
-                        value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
-                </div>
-            </div>
-
-            {/* Pricing and Logistics Group */}
-            <div className="p-6 bg-white/20 rounded-2xl border border-white/40 shadow-sm space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className=" px-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Price ($)</label>
-                        <input required type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
-                            value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                    {/* Date and Time - Side by Side */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 px-2">
+                        <label className="block text-xs font-bold text-white/60 uppercase ml-1">Date</label>
+                        <input required type="date" className={`${glassInput} w-full py-3 px-4`}
+                          value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                      </div>
+                      <div className="space-y-2 px-2">
+                        <label className="block text-xs font-bold text-white/60 uppercase ml-1">Time</label>
+                        <input required type="time" className={`${glassInput} w-full py-3 px-4`}
+                          value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
+                      </div>
                     </div>
-                    <div className=" px-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Total Tickets</label>
-                        <input required type="number" min="1" className={`${glassInput} w-full py-3 px-4`}
-                            value={formData.totalTickets} onChange={e => setFormData({...formData, totalTickets: e.target.value})} />
-                    </div>
-                    <div className="px-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Image URL</label>
-                        <input type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="https://..."
-                            value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
-                    </div>
-                </div>
-            </div>
 
-            {/* Early Bird Section - Enhanced spacing */}
-            <div className="p-6 bg-indigo-50/40 rounded-2xl border border-indigo-100/60 shadow-sm backdrop-blur-sm">
-                <div className="flex items-center gap-3 mb-6">
-                    <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600 cursor-pointer shadow-sm" 
-                        checked={formData.ebEnabled} onChange={e => setFormData({...formData, ebEnabled: e.target.checked})} />
-                    <label htmlFor="ebCheck" className="font-bold text-gray-800 cursor-pointer select-none text-sm">Enable Early Bird Discount</label>
-                </div>
-
-                {formData.ebEnabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in pt-2">
-                        <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-indigo-800/70 uppercase ml-1">Discount Price ($)</label>
-                            <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`} 
-                                value={formData.ebPrice} onChange={e => setFormData({...formData, ebPrice: e.target.value})} />
+                    {/* Pricing and Logistics Group */}
+                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10 shadow-sm space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className=" px-2">
+                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Price ($)</label>
+                          <input required type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
+                            value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                         </div>
-                        <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-indigo-800/70 uppercase ml-1">Offer Ends On</label>
-                            <input type="date" className={`${glassInput} w-full py-3 px-4`} 
-                                value={formData.ebEndDate} onChange={e => setFormData({...formData, ebEndDate: e.target.value})} />
+                        <div className=" px-2">
+                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Total Tickets</label>
+                          <input required type="number" min="1" className={`${glassInput} w-full py-3 px-4`}
+                            value={formData.totalTickets} onChange={e => setFormData({ ...formData, totalTickets: e.target.value })} />
                         </div>
-                        <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-indigo-800/70 uppercase ml-1">Max Discount Tickets</label>
-                            <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`} 
-                                value={formData.ebMaxTickets} onChange={e => setFormData({...formData, ebMaxTickets: e.target.value})} />
+                        <div className="px-2">
+                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Image URL</label>
+                          <input type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="https://..."
+                            value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
                         </div>
+                      </div>
                     </div>
-                )}
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col md:flex-row gap-4 pt-6">
-                <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-indigo-200/50 outline-none hover:scale-[1.01] transition-transform`}>
-                    Create Event
-                </button>
-                <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} flex-1 py-4 hover:bg-white/50 outline-none`}>
-                    Cancel
-                </button>
-            </div>
-        </form>
-    </div>
-  </div>
-)}
+                    {/* Early Bird Section - Enhanced spacing */}
+                    <div className="p-6 bg-indigo-500/10 rounded-2xl border border-indigo-400/20 shadow-sm backdrop-blur-sm">
+                      <div className="flex items-center gap-3 mb-6">
+                        <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600 cursor-pointer shadow-sm"
+                          checked={formData.ebEnabled} onChange={e => setFormData({ ...formData, ebEnabled: e.target.checked })} />
+                        <label htmlFor="ebCheck" className="font-bold text-white cursor-pointer select-none text-sm">Enable Early Bird Discount</label>
+                      </div>
+
+                      {formData.ebEnabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in pt-2">
+                          <div className="space-y-2 px-2">
+                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Discount Price ($)</label>
+                            <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
+                              value={formData.ebPrice} onChange={e => setFormData({ ...formData, ebPrice: e.target.value })} />
+                          </div>
+                          <div className="space-y-2 px-2">
+                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Offer Ends On</label>
+                            <input type="date" className={`${glassInput} w-full py-3 px-4`}
+                              value={formData.ebEndDate} onChange={e => setFormData({ ...formData, ebEndDate: e.target.value })} />
+                          </div>
+                          <div className="space-y-2 px-2">
+                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Max Discount Tickets</label>
+                            <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
+                              value={formData.ebMaxTickets} onChange={e => setFormData({ ...formData, ebMaxTickets: e.target.value })} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col md:flex-row gap-4 pt-6">
+                      <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-indigo-200/50 outline-none hover:scale-[1.01] transition-transform`}>
+                        Create Event
+                      </button>
+                      <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} flex-1 py-4 outline-none`}>
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
           </main>
         </div>

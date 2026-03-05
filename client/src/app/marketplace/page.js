@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaTag, FaShoppingCart } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
+import Skeleton from '../components/Skeleton';
 
 function MarketplacePage() {
   const [resaleTickets, setResaleTickets] = useState([]);
@@ -130,21 +131,21 @@ function MarketplacePage() {
       <main className="min-h-screen px-6 py-8">
         {/* Header */}
         <div className="max-w-7xl mx-auto mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          <h1 className="text-3xl md:text-4xl font-bold text-white">
             Resale Marketplace
           </h1>
-          <p className="text-lg text-gray-600 mt-2">
+          <p className="text-lg text-white/70 mt-2">
             Buy tickets from other users. Royalties go to the original organizer.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border">
-          <h2 className="text-xl font-semibold mb-6 text-gray-800">
+        <div className="max-w-7xl mx-auto bg-white/10 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border border-white/10 ">
+          <h2 className="text-xl font-semibold mb-6 text-white">
             Filter Tickets
           </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-x-6 gap-y-4">
             {/* Search */}
             <div>
               <label className="label font-semibold">Search by Event</label>
@@ -163,10 +164,10 @@ function MarketplacePage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="input"
+                className="select"
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat}>
+                  <option key={cat} value={cat} className="bg-gray-900 text-white">
                     {cat}
                   </option>
                 ))}
@@ -175,40 +176,38 @@ function MarketplacePage() {
           </div>
 
           {/* Clear Filters */}
-          <div className="mt-6">
-            <button
+          <button
               onClick={() => {
                 setSearch('');
                 setCategory('All');
               }}
-              className="btn font-bold"
+              className="btn-sm mt-3"
             >
               Clear Filters
             </button>
           </div>
         </div>
 
-        {/* Tickets Grid */}
-        <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
+        <div className="max-w-7xl mx-auto bg-white/10 backdrop-blur-md p-10 rounded-lg border border-white/10">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white/10 backdrop-blur-md rounded-lg shadow animate-pulse h-64 overflow-hidden"
+                  className="bg-white/10 backdrop-blur-md rounded-lg shadow h-64 overflow-hidden border border-white/10"
                 >
-                  <div className="h-40 bg-gray-200/40" />
+                  <Skeleton className="h-40 w-full rounded-none border-0" />
                   <div className="p-4">
-                    <div className="h-5 bg-gray-200/40 rounded mb-3 w-3/4" />
-                    <div className="h-4 bg-gray-200/40 rounded mb-2 w-1/2" />
-                    <div className="h-4 bg-gray-200/40 rounded w-1/3" />
+                    <Skeleton variant="text" className="w-3/4 mb-3" />
+                    <Skeleton variant="text" className="w-1/2 mb-2" />
+                    <Skeleton variant="text" className="w-1/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredTickets.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-white/70">
                 {resaleTickets.length === 0
                   ? 'No tickets available for resale at the moment.'
                   : 'No tickets match your filters.'}
@@ -226,7 +225,7 @@ function MarketplacePage() {
                 return (
                   <div
                     key={ticket.ticketId}
-                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                    className="bg-white/10 border border-white/10 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
                   >
                     {/* Event Image */}
                     {event.image && (
@@ -243,12 +242,12 @@ function MarketplacePage() {
 
                     <div className="p-6">
                       {/* Event Title */}
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                      <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
                         {event.event}
                       </h3>
 
                       {/* Event Details */}
-                      <div className="space-y-2 mb-4 text-gray-600">
+                      <div className="space-y-2 mb-4 text-white/70">
                         <div className="flex items-center gap-2">
                           <FaCalendarAlt className="text-indigo-500" />
                           <span>{formatDate(event.date)}</span>
@@ -272,23 +271,23 @@ function MarketplacePage() {
                       </div>
 
                       {/* Price Info */}
-                      <div className="border-t pt-4 mb-4">
+                      <div className="border-t border-white/10 pt-4 mb-4">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-gray-600">Resale Price:</span>
+                          <span className="text-sm text-white/70">Resale Price:</span>
                           <span className="text-2xl font-bold text-indigo-600">
                             Rs {ticket.resalePrice?.toFixed(2) || '0.00'}
                           </span>
                         </div>
                         {ticket.originalPurchasePrice && (
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500">Original Price:</span>
-                            <span className="text-sm text-gray-500 line-through">
+                            <span className="text-xs text-white/50">Original Price:</span>
+                            <span className="text-sm text-white/50 line-through">
                               Rs {ticket.originalPurchasePrice.toFixed(2)}
                             </span>
                           </div>
                         )}
-                        <div className="mt-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100">
-                          <p className="text-xs text-amber-700">
+                        <div className="mt-2 px-3 py-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                          <p className="text-xs text-amber-200">
                             {(() => {
                               const bps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 0;
                               const pct = Math.max(0, Math.min(1000, bps)) / 100;
@@ -308,8 +307,8 @@ function MarketplacePage() {
                       <button
                         onClick={() => handleBuyTicket(ticket)}
                         disabled={isBuying || isOwned}
-                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${isOwned
-                          ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                        className={`w-full py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${isOwned
+                          ? 'bg-white/10 text-white/50 cursor-not-allowed border border-white/10'
                           : isBuying
                             ? 'bg-indigo-400 text-white cursor-wait'
                             : 'bg-indigo-600 text-white hover:bg-indigo-700'

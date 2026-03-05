@@ -4,16 +4,17 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import useEventStore from '@/store/useEventStore';
+import Skeleton from '../components/Skeleton';
 
 export default function DiscoverPage() {
   // Global State from Zustand
   const { events, fetchEvents, loading } = useEventStore();
-  
+
   // UI States
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [location, setLocation] = useState('');
-  
+
   const { user } = useAuth();
   const router = useRouter();
 
@@ -69,7 +70,7 @@ export default function DiscoverPage() {
             firebase_uid: user.uid,
             category: event.category,
           }),
-        }).catch(() => {});
+        }).catch(() => { });
       } catch {
         // Intentionally ignore errors
       }
@@ -80,20 +81,20 @@ export default function DiscoverPage() {
     <main className="min-h-screen px-6 py-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+        <h1 className="text-3xl md:text-4xl font-bold text-white">
           Discover Events
         </h1>
-        <p className="text-lg text-gray-600 mt-2">
+        <p className="text-lg text-white/70 mt-2">
           Find and attend events that interest you
         </p>
       </div>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border">
-        <h2 className="text-xl font-semibold mb-6 text-gray-800">
+      <div className="max-w-7xl mx-auto bg-white/10 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border border-white/10 ">
+        <h2 className="text-xl font-semibold mb-6 text-white">
           Filter Events
         </h2>
-
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
           {/* Search */}
           <div>
@@ -113,10 +114,10 @@ export default function DiscoverPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="input"
+              className="select"
             >
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
+                <option key={cat} value={cat} className="bg-gray-900 text-white">
                   {cat}
                 </option>
               ))}
@@ -133,44 +134,45 @@ export default function DiscoverPage() {
               onChange={(e) => setLocation(e.target.value)}
               className="input"
             />
+            
           </div>
+        </div>
+        <button
+              onClick={() => {
+                setSearch('');
+                setCategory('All');
+                setLocation('');
+              }}
+              className="btn-sm mt-3"
+            >
+              Clear Filters
+            </button>
         </div>
 
         {/* Clear Filters */}
-        <div className="mt-6">
-          <button
-            onClick={() => {
-              setSearch('');
-              setCategory('All');
-              setLocation('');
-            }}
-            className="btn font-bold"
-          >
-            Clear Filters
-          </button>
-        </div>
+
       </div>
 
       {/* Event Grid */}
-      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
+      <div className="max-w-7xl mx-auto bg-white/10 backdrop-blur-md p-10 rounded-lg border border-white/10">
         {loading && events.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white/10 backdrop-blur-md rounded-lg shadow animate-pulse h-64 overflow-hidden"
+                className="bg-white/10 backdrop-blur-md rounded-lg shadow h-64 overflow-hidden border border-white/10"
               >
-                <div className="h-40 bg-gray-200/40" />
+                <Skeleton className="h-40 w-full rounded-none border-0" />
                 <div className="p-4">
-                  <div className="h-5 bg-gray-200/40 rounded mb-3 w-3/4" />
-                  <div className="h-4 bg-gray-200/40 rounded mb-2 w-1/2" />
-                  <div className="h-4 bg-gray-200/40 rounded w-1/3" />
+                  <Skeleton variant="text" className="w-3/4 mb-3" />
+                  <Skeleton variant="text" className="w-1/2 mb-2" />
+                  <Skeleton variant="text" className="w-1/3" />
                 </div>
               </div>
             ))}
           </div>
         ) : filteredEvents.length === 0 && (search.trim() || category !== 'All' || location.trim()) ? (
-          <p className="text-center text-gray-500 text-lg">
+          <p className="text-center text-white/60 text-lg">
             No events match your filters.
           </p>
         ) : (
@@ -194,7 +196,7 @@ export default function DiscoverPage() {
                   className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
                   onClick={() => handleEventClick(event)}
                 >
-                  <div className="h-40 bg-gradient-to-br from-purple-100 to-gray-100 flex items-center justify-center">
+                  <div className="h-40 bg-gradient-to-br from-purple-500/20 to-gray-900/10 flex items-center justify-center">
                     {event.image ? (
                       <img
                         src={event.image}
@@ -202,31 +204,31 @@ export default function DiscoverPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-gray-400 text-lg">No Image</span>
+                      <span className="text-white/50 text-lg">No Image</span>
                     )}
                   </div>
 
                   <div className="p-4">
-                    <h3 className="text-xl font-bold text-gray-900 truncate">
+                    <h3 className="text-xl font-bold text-white truncate">
                       {event.event}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-white/70">
                       <strong>Date:</strong>{' '}
                       {new Date(event.date).toLocaleDateString()}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-white/70">
                       <strong>Location:</strong> {event.location}
                     </p>
 
                     {earlyBirdActive ? (
                       <p className="text-green-600 font-semibold">
                         Early Bird Price: Rs {event.earlyBird.discountPrice}
-                        <span className="line-through text-gray-500 ml-2 text-sm">
+                        <span className="line-through text-white/40 ml-2 text-sm">
                           Rs {event.price}
                         </span>
                       </p>
                     ) : (
-                      <p className="text-gray-800 font-semibold">
+                      <p className="text-white font-semibold">
                         Price: Rs {event.price}
                       </p>
                     )}

@@ -3,21 +3,22 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
+import Skeleton from '../components/Skeleton';
 
 // --- ICONS ---
-const UserIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>);
-const LockIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>);
-const TicketIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h.01M18 12h.01"/></svg>);
-const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>);
-const LogOutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>);
-const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>);
-const IdIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>);
+const UserIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>);
+const LockIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>);
+const TicketIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 12h.01M18 12h.01" /></svg>);
+const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>);
+const LogOutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>);
+const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>);
+const IdIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>);
 
 function UserProfile() {
   const router = useRouter();
   const { user: authUser, logout, updatePasswordFunc, updateEmailFunc, reauthenticate, deleteAccount } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState('profile'); 
+
+  const [activeTab, setActiveTab] = useState('profile');
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,11 +27,11 @@ function UserProfile() {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  
+
   // Re-Auth Modal State
   const [showReauthModal, setShowReauthModal] = useState(false);
   const [reauthPassword, setReauthPassword] = useState('');
-  const [pendingAction, setPendingAction] = useState(null); 
+  const [pendingAction, setPendingAction] = useState(null);
 
   const [statusMsg, setStatusMsg] = useState({ type: '', msg: '' });
 
@@ -38,9 +39,9 @@ function UserProfile() {
   const glassContainer = "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden";
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
   const glassContent = "bg-transparent"; // Content sits directly on background
-  const glassCard = "bg-white/40 backdrop-blur-md border border-white/30 shadow-lg rounded-2xl"; // Inner cards
-  const glassInput = "w-full p-3 bg-white/20 border border-white/30 rounded-xl focus:ring-2 focus:ring-indigo-400/70 focus:bg-white/40 outline-none transition text-gray-800 placeholder-gray-500";
-  const glassButton = "px-4 py-2 bg-white/30 hover:bg-white/50 border border-white/40 rounded-xl transition text-gray-800 font-medium backdrop-blur-sm shadow-sm";
+  const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl"; // Inner cards
+  const glassInput = "w-full p-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400/70 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
+  const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition text-white font-medium backdrop-blur-sm shadow-sm";
   const primaryButton = "px-6 py-2.5 bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition font-medium backdrop-blur-sm";
 
   useEffect(() => {
@@ -106,7 +107,7 @@ function UserProfile() {
 
   const handleUpdateEmail = (e) => {
     e.preventDefault();
-    if(newEmail === userData.email) return;
+    if (newEmail === userData.email) return;
     executeEmailUpdate();
   };
 
@@ -130,9 +131,9 @@ function UserProfile() {
 
   const handleUpdatePassword = (e) => {
     e.preventDefault();
-    if(newPassword.length < 6) {
-        setStatusMsg({ type: 'error', msg: 'Password must be at least 6 characters' });
-        return;
+    if (newPassword.length < 6) {
+      setStatusMsg({ type: 'error', msg: 'Password must be at least 6 characters' });
+      return;
     }
     executePasswordUpdate();
   };
@@ -178,43 +179,68 @@ function UserProfile() {
 
   // Helper to get initials
   const getInitials = (name) => {
-    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2) : 'U';
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U';
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-white/10 backdrop-blur-sm">
-        <div className="animate-pulse flex flex-col items-center">
-            <div className="h-12 w-12 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-indigo-600 font-medium">Loading Profile...</p>
-        </div>
+    <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+      <div className="max-w-6xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[800px]">
+        {/* Skeleton Sidebar */}
+        <aside className="w-full md:w-72 flex-shrink-0 flex flex-col p-6 border-r border-white/10">
+          <Skeleton className="h-8 w-3/4 mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="mt-auto pt-10">
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </aside>
+        {/* Skeleton Content */}
+        <main className="flex-1 p-6 md:p-10 space-y-6">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center gap-6 border border-white/10">
+            <Skeleton variant="circle" className="h-24 w-24" />
+            <div className="space-y-2 flex-1">
+              <Skeleton variant="text" className="w-1/3" />
+              <Skeleton variant="text" className="w-1/4" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </main>
+      </div>
     </div>
   );
 
   return (
-    <ProtectedRoute allowedRoles={['user','admin','organizer']}>
+    <ProtectedRoute allowedRoles={['user', 'admin', 'organizer']}>
       {/* 1. Main Background with Gradient Blobs */}
       <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
-         {/* Decorative Background Elements */}
-         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-300/30 blur-[100px]"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
-            <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-blue-300/20 blur-[80px]"></div>
-         </div>
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-300/30 blur-[100px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-blue-300/20 blur-[80px]"></div>
+        </div>
 
         <div className={`max-w-6xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[800px]`}>
-          
+
           {/* RE-AUTH MODAL */}
           {showReauthModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
-              <div className="bg-white/90 p-6 rounded-2xl shadow-2xl max-w-md w-full m-4 border border-white/50">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Security Verification</h3>
-                <p className="text-gray-500 mb-4 text-sm">Please confirm your password to proceed with sensitive changes.</p>
+              <div className="bg-gray-900/80 p-6 rounded-2xl shadow-2xl max-w-md w-full m-4 border border-white/10">
+                <h3 className="text-xl font-bold text-white mb-2">Security Verification</h3>
+                <p className="text-white/70 mb-4 text-sm">Please confirm your password to proceed with sensitive changes.</p>
                 <form onSubmit={handleReauthSubmit} className="space-y-4">
-                   <input type="password" placeholder="Current Password" value={reauthPassword} onChange={(e) => setReauthPassword(e.target.value)} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" autoFocus />
-                   <div className="flex gap-3 justify-end">
-                      <button type="button" onClick={() => { setShowReauthModal(false); setPendingAction(null); }} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                      <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Verify</button>
-                   </div>
+                  <input type="password" placeholder="Current Password" value={reauthPassword} onChange={(e) => setReauthPassword(e.target.value)} className="w-full p-3 bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" autoFocus />
+                  <div className="flex gap-3 justify-end">
+                    <button type="button" onClick={() => { setShowReauthModal(false); setPendingAction(null); }} className="px-4 py-2 text-white/70 hover:bg-white/10 rounded-lg">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Verify</button>
+                  </div>
                 </form>
               </div>
             </div>
@@ -223,39 +249,39 @@ function UserProfile() {
           {/* 2. SIDEBAR NAVIGATION */}
           <aside className={`w-full md:w-72 flex-shrink-0 flex flex-col justify-between p-6 ${glassSidebar}`}>
             <div>
-               <div className="mb-8 pl-2">
-                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                    Account
-                 </h2>
-                 <p className="text-xs text-gray-500 font-medium tracking-wider uppercase mt-1">Settings & Privacy</p>
-               </div>
+              <div className="mb-8 pl-2">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                  Account
+                </h2>
+                <p className="text-xs text-white/60 font-medium tracking-wider uppercase mt-1">Settings & Privacy</p>
+              </div>
 
-               <nav className="space-y-2">
-                 <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'profile' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
-                    <UserIcon /> General Profile
-                 </button>
-                 
-                 <button onClick={() => setActiveTab('security')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'security' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
-                    <LockIcon /> Security
-                 </button>
-                 <button onClick={() => router.push('/dashboard/user')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-white/20 transition-all duration-300">
-                    <TicketIcon /> My Tickets
-                 </button>
-                 <div className="h-px bg-gradient-to-r from-transparent via-gray-300/40 to-transparent my-4"></div>
-                 <button onClick={() => setActiveTab('danger')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'danger' ? 'bg-red-500/10 text-red-600 border border-red-500/20' : 'text-red-500 hover:bg-red-500/10'}`}>
-                    <TrashIcon /> Delete Account
-                 </button>
-               </nav>
+              <nav className="space-y-2">
+                <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30`}>
+                  <UserIcon /> General Profile
+                </button>
+
+                <button onClick={() => setActiveTab('security')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30`}>
+                  <LockIcon /> Security
+                </button>
+                <button onClick={() => router.push('/dashboard/user')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30`} >
+                  <TicketIcon /> My Tickets
+                </button>
+                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
+                <button onClick={() => setActiveTab('danger')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20 `}>
+                  <TrashIcon /> Delete Account
+                </button>
+              </nav>
             </div>
-            
-            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/20 hover:bg-white/40 border border-white/30 text-gray-700 transition-all text-sm font-medium`}>
-                <LogOutIcon /> Sign Out
+
+            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white/80 transition-all text-sm font-medium`}>
+              <LogOutIcon /> Sign Out
             </button>
           </aside>
 
           {/* 3. MAIN CONTENT AREA */}
           <main className={`flex-1 p-6 md:p-10 ${glassContent} overflow-y-auto`}>
-            
+
             {statusMsg.msg && (
               <div className={`mb-6 p-4 rounded-xl border backdrop-blur-md shadow-sm text-sm font-medium animate-fade-in ${statusMsg.type === 'success' ? 'bg-green-100/60 border-green-200 text-green-800' : statusMsg.type === 'error' ? 'bg-red-100/60 border-red-200 text-red-800' : 'bg-blue-100/60 border-blue-200 text-blue-800'}`}>
                 {statusMsg.msg}
@@ -267,66 +293,66 @@ function UserProfile() {
               <div className="space-y-6 animate-fade-in">
                 {/* Hero Profile Header */}
                 <div className={`${glassCard} p-6 flex flex-col md:flex-row items-center md:items-start gap-6`}>
-                    <div className="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
-                        {getInitials(userData?.name)}
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
+                    {getInitials(userData?.name)}
+                  </div>
+                  <div className="text-center md:text-left flex-1">
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                      <h2 className="text-2xl font-bold text-white">{userData?.name}</h2>
+                      <span className="inline-block px-3 py-1 bg-indigo-100/50 text-indigo-700 border border-indigo-200/50 rounded-full text-xs font-bold uppercase tracking-wider">
+                        {userData?.role}
+                      </span>
                     </div>
-                    <div className="text-center md:text-left flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                            <h2 className="text-2xl font-bold text-gray-800">{userData?.name}</h2>
-                            <span className="inline-block px-3 py-1 bg-indigo-100/50 text-indigo-700 border border-indigo-200/50 rounded-full text-xs font-bold uppercase tracking-wider">
-                                {userData?.role}
-                            </span>
-                        </div>
-                        <p className="text-gray-500 text-sm mb-4">{userData?.email}</p>
-                        {!isEditingProfile && (
-                            <button onClick={() => setIsEditingProfile(true)} className={glassButton}>
-                                Edit Profile Details
-                            </button>
-                        )}
-                    </div>
+                    <p className="text-white/60 text-sm mb-4">{userData?.email}</p>
+                    {!isEditingProfile && (
+                      <button onClick={() => setIsEditingProfile(true)} className={glassButton}>
+                        Edit Profile Details
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Edit Form */}
                 {isEditingProfile && (
-                     <div className={`${glassCard} p-6 md:p-8 border-l-4 border-l-indigo-500`}>
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Edit Details</h3>
-                        <form onSubmit={handleUpdateProfile} className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Full Name</label>
-                                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className={glassInput} />
-                            </div>
-                            <div className="flex gap-3">
-                                <button type="submit" className={primaryButton}>Save Changes</button>
-                                <button type="button" onClick={() => { setIsEditingProfile(false); setNewName(userData.name); }} className={glassButton}>Cancel</button>
-                            </div>
-                        </form>
-                     </div>
+                  <div className={`${glassCard} p-6 md:p-8 border-l-4 border-l-indigo-500`}>
+                    <h3 className="text-lg font-bold text-white mb-4">Edit Details</h3>
+                    <form onSubmit={handleUpdateProfile} className="space-y-6">
+                      <div>
+                        <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Full Name</label>
+                        <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className={glassInput} />
+                      </div>
+                      <div className="flex gap-3">
+                        <button type="submit" className={primaryButton}>Save Changes</button>
+                        <button type="button" onClick={() => { setIsEditingProfile(false); setNewName(userData.name); }} className={glassButton}>Cancel</button>
+                      </div>
+                    </form>
+                  </div>
                 )}
 
                 {/* Info Grid (More Details Added) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className={`${glassCard} p-5`}>
-                        <div className="flex items-center gap-3 mb-2 text-indigo-600">
-                             <IdIcon />
-                             <span className="font-semibold text-sm">Account ID</span>
-                        </div>
-                        <p className="text-gray-500 text-xs break-all font-mono bg-white/30 p-2 rounded-lg border border-white/20 select-all">
-                            {userData?._id || userData?.firebase_uid}
-                        </p>
+                  <div className={`${glassCard} p-5`}>
+                    <div className="flex items-center gap-3 mb-2 text-indigo-600">
+                      <IdIcon />
+                      <span className="font-semibold text-sm">Account ID</span>
                     </div>
-                    
-                    <div className={`${glassCard} p-5`}>
-                         <div className="flex items-center gap-3 mb-2 text-purple-600">
-                             <CalendarIcon />
-                             <span className="font-semibold text-sm">Member Status</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                             <p className="text-sm text-gray-600">Active Member</p>
-                             {userData?.createdAt && (
-                                 <p className="text-xs text-gray-400">Joined: {new Date(userData.createdAt).toLocaleDateString()}</p>
-                             )}
-                        </div>
+                    <p className="text-white/60 text-xs break-all font-mono bg-white/10 p-2 rounded-lg border border-white/10 select-all">
+                      {userData?._id || userData?.firebase_uid}
+                    </p>
+                  </div>
+
+                  <div className={`${glassCard} p-5`}>
+                    <div className="flex items-center gap-3 mb-2 text-purple-600">
+                      <CalendarIcon />
+                      <span className="font-semibold text-sm">Member Status</span>
                     </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm text-white/70">Active Member</p>
+                      {userData?.createdAt && (
+                        <p className="text-xs text-white/50">Joined: {new Date(userData.createdAt).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -335,28 +361,28 @@ function UserProfile() {
             {activeTab === 'security' && (
               <div className="space-y-6 animate-fade-in">
                 <div className={`${glassCard} p-6 md:p-8`}>
-                  <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><LockIcon/> Login Credentials</h2>
-                  
+                  <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><LockIcon /> Login Credentials</h2>
+
                   {/* Email */}
                   <div className="mb-8">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Update Email Address</label>
-                      <form onSubmit={handleUpdateEmail} className="space-y-4">
-                          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className={glassInput} required />
-                          <div className="flex justify-end">
-                              <button type="submit" className={primaryButton}>Update Email</button>
-                          </div>
-                      </form>
+                    <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Update Email Address</label>
+                    <form onSubmit={handleUpdateEmail} className="space-y-4">
+                      <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className={glassInput} required />
+                      <div className="flex justify-end">
+                        <button type="submit" className={primaryButton}>Update Email</button>
+                      </div>
+                    </form>
                   </div>
 
                   {/* Password */}
                   <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Change Password</label>
-                      <form onSubmit={handleUpdatePassword} className="space-y-4">
-                          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New Password (min 6 chars)" className={glassInput} minLength={6} />
-                          <div className="flex justify-end">
-                              <button type="submit" disabled={!newPassword} className={primaryButton}>Change Password</button>
-                          </div>
-                      </form>
+                    <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Change Password</label>
+                    <form onSubmit={handleUpdatePassword} className="space-y-4">
+                      <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New Password (min 6 chars)" className={glassInput} minLength={6} />
+                      <div className="flex justify-end">
+                        <button type="submit" disabled={!newPassword} className={primaryButton}>Change Password</button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -364,17 +390,17 @@ function UserProfile() {
 
             {/* TAB: DANGER */}
             {activeTab === 'danger' && (
-              <div className={`${glassCard} border-red-500/30 p-6 md:p-8 animate-fade-in relative overflow-hidden bg-red-50/30`}>
-                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500/70"></div>
-                 <h2 className="text-xl font-bold text-red-700 mb-4">Danger Zone</h2>
-                 <p className="text-gray-600 mb-8 max-w-lg">
-                    Deleting your account is permanent. This action cannot be undone. All your data, including tickets and profile information, will be wiped immediately.
-                 </p>
-                 <div className="flex justify-end">
-                   <button onClick={handleDelete} className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/30 transition font-medium">
-                        Permanently Delete Account
-                   </button>
-                 </div>
+              <div className={`${glassCard} border-red-500/30 p-6 md:p-8 animate-fade-in relative overflow-hidden bg-red-500/10`}>
+                <div className="absolute top-0 left-0 w-full h-1 bg-red-500/70"></div>
+                <h2 className="text-xl font-bold text-red-300 mb-4">Danger Zone</h2>
+                <p className="text-white/70 mb-8 max-w-lg">
+                  Deleting your account is permanent. This action cannot be undone. All your data, including tickets and profile information, will be wiped immediately.
+                </p>
+                <div className="flex justify-end">
+                  <button onClick={handleDelete} className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/30 transition font-medium">
+                    Permanently Delete Account
+                  </button>
+                </div>
               </div>
             )}
 

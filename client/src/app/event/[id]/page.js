@@ -81,63 +81,84 @@ function Event() {
       ? `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`
       : null;
 
+  const eb = event.earlyBird;
+  const now = new Date();
+  const isTimeValid = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
+  const isQuotaValid = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
+  const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
+
   return (
     <div className="min-h-screen">
       {/* HERO */}
-      <div
-        className="relative flex h-[500px] w-full items-end bg-cover bg-center"
-        style={{ backgroundImage: `url(${event.image})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="p-4 md:p-8">
+        <div
+          className="relative flex h-[500px] w-full items-end bg-cover bg-center rounded-3xl overflow-hidden shadow-2xl"
+          style={{ backgroundImage: `url(${event.image})` }}
+        >
 
-        <div className="relative z-10 w-full p-8">
-          <div className="mx-auto max-w-7xl space-y-4 text-white">
-            <h1 className="text-4xl md:text-5xl font-extrabold">
-              {event.event}
-            </h1>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-            <div className="flex flex-wrap gap-4">
-              <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
-                <FaCalendarAlt className="mr-2" />
-                {new Date(event.date).toLocaleDateString()}
-              </span>
-              <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
-                <FaClock className="mr-2" />
-                {event.time}
-              </span>
-              <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
-                <FaMapMarkerAlt className="mr-2" />
-                {event.location}
-              </span>
+          <div className="relative z-10 w-full p-8">
+            <div className="mx-auto max-w-7xl space-y-4 text-white">
+              <h1 className="text-4xl md:text-5xl font-extrabold">
+                {event.event}
+              </h1>
+
+              <div className="flex flex-wrap gap-4">
+                <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
+                  <FaCalendarAlt className="mr-2" />
+                  {new Date(event.date).toLocaleDateString()}
+                </span>
+                <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
+                  <FaClock className="mr-2" />
+                  {event.time}
+                </span>
+                <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
+                  <FaMapMarkerAlt className="mr-2" />
+                  {event.location}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* CONTENT GRID */}
-      <div className="mx-auto max-w-7xl px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
 
         {/* ABOUT */}
-        <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg border">
-          <h3 className="mb-6 text-3xl font-bold text-gray-900">
+        <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg border border-white/10">
+          <h3 className="mb-6 text-3xl font-bold text-white">
             About This Event
           </h3>
-          <p className="text-lg leading-relaxed text-gray-600">
+          <p className="text-lg leading-relaxed text-white/70">
             Join us for an unforgettable experience! This event promises to
             deliver amazing moments and create lasting memories.
           </p>
         </div>
 
         {/* TICKETS (ALIGNED + STICKY) */}
-        <div className="lg:col-span-1 lg:row-span-2 sticky top-8 rounded-3xl border border-purple-100 bg-white/10 p-8 shadow-xl backdrop-blur-md">
-          <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
+        <div className="lg:col-span-1 lg:row-span-2 sticky top-8 rounded-3xl border border-white/10 bg-white/10 p-8 shadow-xl backdrop-blur-md">
+          <h2 className="mb-8 text-center text-2xl font-bold text-white">
             Get Tickets
           </h2>
 
           <div className="mb-8 text-center">
-            <div className="text-4xl font-extrabold text-purple-600">
-              Rs {event.price}
-            </div>
+            {earlyBirdActive ? (
+              <div className="flex flex-col items-center">
+                <span className="text-sm text-green-400 font-semibold mb-1 uppercase tracking-wider">Early Bird Active</span>
+                <div className="text-4xl font-extrabold text-green-500">
+                  Rs {event.earlyBird.discountPrice}
+                </div>
+                <div className="text-lg line-through text-white/50 mt-1">
+                  Rs {event.price}
+                </div>
+              </div>
+            ) : (
+              <div className="text-4xl font-extrabold text-purple-600">
+                Rs {event.price}
+              </div>
+            )}
           </div>
 
           <button
@@ -146,7 +167,7 @@ function Event() {
             className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition
               ${event.remainingTickets > 0
                 ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
-                : 'bg-gray-400 text-gray-100 cursor-not-allowed'
+                : 'bg-white/10 text-white/50 cursor-not-allowed'
               }`}
           >
             {event.remainingTickets > 0 ? 'Buy Tickets' : 'Sold Out'}
@@ -154,8 +175,8 @@ function Event() {
         </div>
 
         {/* LOCATION */}
-        <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-8 shadow-lg border">
-          <h3 className="mb-6 text-2xl font-bold text-gray-900">
+        <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-8 shadow-lg border border-white/10">
+          <h3 className="mb-6 text-2xl font-bold text-white">
             Event Location
           </h3>
 
@@ -172,7 +193,7 @@ function Event() {
               href={googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition shadow-md"
+              className="btn inline-block mt-6 w-auto no-underline"
             >
               Open in Google Maps
             </a>

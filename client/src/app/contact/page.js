@@ -16,12 +16,12 @@ const ContactCard = ({ icon, title, content, link, linkLabel }) => {
       <div className="absolute -top-4 -right-4 w-24 h-24 bg-violet-500/20 rounded-full blur-2xl group-hover:bg-violet-500/40 transition-all duration-500" />
 
       {/* Icon Container */}
-      <div className="mb-6 p-4 rounded-2xl bg-white/40 shadow-inner transition-transform duration-500 group-hover:rotate-[360deg]">
+      <div className="mb-6 p-4 rounded-2xl bg-white/20 shadow-inner transition-transform duration-500 group-hover:rotate-[360deg]">
         <img src={icon} alt={title} className="w-8 h-8" />
       </div>
 
-      <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-      <p className="text-gray-700 mb-6 leading-relaxed text-sm font-medium">
+      <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
+      <p className="text-white/70 mb-6 leading-relaxed text-sm font-medium">
         {content}
       </p>
       
@@ -48,10 +48,10 @@ function Contact() {
         {/* Header Section */}
         <div className="text-center mb-16">
           <span className="text-violet-600 font-bold tracking-widest uppercase text-sm">Get in touch</span>
-          <h1 className="text-5xl md:text-6xl font-black text-gray-900 mt-4 mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-6xl font-black text-white mt-4 mb-6 tracking-tight">
             We Would love to <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">hear from you.</span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto font-medium">
+          <p className="text-lg text-white/70 max-w-2xl mx-auto font-medium">
             Have questions about BlockTix? Our team is here to help you secure the future of ticketing.
           </p>
         </div>

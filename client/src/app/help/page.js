@@ -76,21 +76,21 @@ const HelpCenter = () => {
   };
 
   return (
-    <section className="min-h-screen bg-white flex items-center justify-center p-6">
+    <section className="min-h-screen flex items-center justify-center p-6">
       {/* Glassmorphic Chat Window */}
-      <div className="w-full max-w-2xl h-[600px] bg-slate-50/50 backdrop-blur-xl border border-slate-200 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-2xl h-[600px] bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="p-6 bg-white/80 border-b border-slate-100 flex items-center gap-4">
+        <div className="p-6 bg-white/10 border-b border-white/10 flex items-center gap-4">
           <div className="relative">
             <div className="w-12 h-12 bg-violet-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-violet-200">
               BT
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black/50 rounded-full"></div>
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 text-lg">BlockTix Assistant</h3>
-            <p className="text-xs text-slate-400 font-semibold tracking-wide uppercase">Live DB Sync Active</p>
+            <h3 className="font-bold text-white text-lg">BlockTix Assistant</h3>
+            <p className="text-xs text-white/60 font-semibold tracking-wide uppercase">Live DB Sync Active</p>
           </div>
         </div>
 
@@ -101,23 +101,23 @@ const HelpCenter = () => {
               <div className={`max-w-[80%] px-5 py-3 rounded-2xl text-[15px] ${
                 m.sender === 'user' 
                 ? 'bg-violet-600 text-white rounded-tr-none' 
-                : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none shadow-sm'
+                : 'bg-white/10 text-white/80 border border-white/10 rounded-tl-none shadow-sm'
               }`}>
                 {m.text}
               </div>
             </div>
           ))}
-          {isTyping && <div className="text-xs text-slate-400 animate-pulse ml-2 font-medium">Tixie is thinking...</div>}
+          {isTyping && <div className="text-xs text-white/60 animate-pulse ml-2 font-medium">Tixie is thinking...</div>}
           <div ref={scrollRef} />
         </div>
 
         {/* Input Area */}
-        <form onSubmit={handleSend} className="p-6 bg-white/80 border-t border-slate-100 flex gap-3">
+        <form onSubmit={handleSend} className="p-6 bg-white/10 border-t border-white/10 flex gap-3">
           <input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search events or ask for help..."
-            className="flex-1 bg-slate-100/50 border border-transparent focus:border-violet-500/30 focus:bg-white rounded-2xl px-5 py-3 outline-none transition-all text-slate-700"
+            className="flex-1 bg-white/10 border border-white/10 focus:border-violet-500/30 focus:bg-white/15 rounded-2xl px-5 py-3 outline-none transition-all text-white placeholder-white/60"
           />
           <button className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-violet-200 transition-all active:scale-95">
             Ask

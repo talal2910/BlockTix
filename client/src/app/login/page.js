@@ -63,7 +63,7 @@ export default function LoginPage() {
     <div className='flex items-center justify-center min-h-[calc(100vh-100px)] w-full px-4'>
       <div className='w-full max-w-[400px] bg-white/30 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/40 flex flex-col items-center'>
         
-        <h2 className='text-3xl font-bold mb-6 text-gray-800'>Login</h2>
+        <h2 className='text-3xl font-bold mb-6 text-white'>Login</h2>
 
         {/* Error Message */}
         {error && (
@@ -83,10 +83,10 @@ export default function LoginPage() {
           
           {/* Email Container */}
           <div className="w-full flex flex-col gap-1">
-            <label className='text-sm font-semibold text-gray-700 ml-1'>Email</label>
+            <label className='text-sm font-semibold text-white/80 ml-1'>Email</label>
             <input
-              className={`w-90 p-3 rounded-xl bg-white/60 border outline-none transition-all focus:ring-2 focus:ring-purple-500/50 ${
-                emailError ? 'border-red-500' : 'border-gray-200'
+              className={`w-90 p-3 rounded-xl bg-white/10 border outline-none transition-all focus:ring-2 focus:ring-purple-500/50 text-white placeholder-white/60 ${
+                emailError ? 'border-red-500' : 'border-white/20'
               } ${isLoading || isSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
               type="email"
               placeholder="name@example.com"
@@ -102,9 +102,9 @@ export default function LoginPage() {
 
           {/* Password Container */}
           <div className="w-full flex flex-col gap-1">
-            <label className='text-sm font-semibold text-gray-700 ml-1'>Password</label>
+            <label className='text-sm font-semibold text-white/80 ml-1'>Password</label>
             <input
-              className={`w-90 p-3 rounded-xl bg-white/60 border border-gray-200 outline-none transition-all focus:ring-2 focus:ring-purple-500/50 ${
+              className={`w-90 p-3 rounded-xl bg-white/10 border border-white/20 outline-none transition-all focus:ring-2 focus:ring-purple-500/50 text-white placeholder-white/60 ${
                 isLoading || isSuccess ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               type="password"
@@ -118,11 +118,11 @@ export default function LoginPage() {
 
           {/* Helper Links */}
           <div className="flex flex-col space-y-1 py-1">
-            <p className='text-xs text-gray-600'>
+            <p className='text-xs text-white/70'>
               Dont have an account?{' '}
               <Link href="/signup" className={`text-purple-700 font-bold hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>Sign up</Link>
             </p>
-            <Link href="/resetPassword" title="Forgot Password?" className={`text-xs font-bold text-purple-700 hover:underline w-fit ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
+            <Link href="/resetPassword" title="Forgot Password?" className={`text-xs font-bold text-purple-300 hover:underline w-fit ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
               Forgot Password?
             </Link>
           </div>

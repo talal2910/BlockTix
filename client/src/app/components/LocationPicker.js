@@ -99,7 +99,7 @@ export default function LocationPicker({ setCoordinates }) {
               placeholder="Search location in Pakistan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full border p-2 pr-10 rounded-lg bg-white relative z-[9999]"
+              className="w-full border p-2 pr-10 rounded-lg bg-white/10 text-white relative z-[9999] placeholder-white/60"
             />
 
             {/* Cross Clear Button */}
@@ -109,7 +109,7 @@ export default function LocationPicker({ setCoordinates }) {
                   setSearch("");
                   setSuggestions([]);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-300 hover:bg-gray-400 text-black rounded-full w-6 h-6 flex items-center justify-center text-sm z-[9999]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-600/60 hover:bg-gray-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm z-[9999]"
                 aria-label="Clear search"
               >
                 ×
@@ -129,11 +129,11 @@ export default function LocationPicker({ setCoordinates }) {
 
         {/* Suggestions Dropdown */}
         {suggestions.length > 0 && (
-          <ul className="absolute top-full left-0 w-full bg-white border rounded-lg max-h-60 overflow-auto mt-1 shadow-lg z-[9999]">
+          <ul className="absolute top-full left-0 w-full bg-white/10 border border-white/10 rounded-lg max-h-60 overflow-auto mt-1 shadow-lg z-[9999]">
             {suggestions.map((item) => (
               <li
                 key={item.place_id}
-                className="p-2 hover:bg-gray-200 cursor-pointer"
+                className="p-2 hover:bg-white/20 cursor-pointer text-white"
                 onClick={() => handleSelectSuggestion(item)}
               >
                 {item.display_name}

@@ -83,40 +83,39 @@ export default function Home() {
       {/* --- HERO SECTION --- */}
       <div className="flex flex-col items-center justify-center min-h-screen shadow-xl relative overflow-hidden">
         {/* Optional: Add a subtle animated blob behind for depth if needed, strictly optional */}
-        
-        <h1 className="sm:text-6xl font-bold m-0 w-3/4 text-center z-10">
+
+        <h1 className="text-4xl sm:text-6xl font-bold m-0 w-full sm:w-3/4 px-4 text-center z-10">
           Discover and attend events with{' '}
           <span
-            className={`text-[#7C3AED] inline-block transition-all duration-700 ease-out ${
-              show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
-            }`}
+            className={`text-[#7C3AED] inline-block transition-all duration-700 ease-out ${show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
+              }`}
           >
             blockchain security
           </span>
         </h1>
 
-        <p className="text-xl text-gray-500 w-1/2 text-center mt-6 z-10">
+        <p className="text-lg sm:text-xl text-white/70 w-full sm:w-1/2 px-6 text-center mt-6 z-10">
           Find and purchase tickets for the best events near you, secured by blockchain technology to prevent fraud and ensure authenticity.
         </p>
 
         {/* --- NEW SEARCH DESIGN --- */}
-        <div className="relative mt-8 w-full flex justify-center z-20">
+        <div className="relative mt-8 w-auto flex justify-center z-20">
           <div className="relative sm:w-96 w-3/4 group">
-            
+
             {/* Transparent input with backdrop blur and white border */}
             <input
               type="text"
               placeholder="Search for events..."
-              className="w-full bg-white/10 border border-white/30 backdrop-blur-md text-gray-900 placeholder-gray-600 rounded-full pl-6 pr-12 py-3 shadow-lg focus:outline-none focus:bg-white/20 focus:border-[#7C3AED]/50 focus:ring-2 focus:ring-[#7C3AED]/20 transition-all duration-300"
+              className="w-full bg-white/10 border border-white/20 backdrop-blur-md text-white placeholder-white/60 rounded-full pl-6 pr-12 py-3 shadow-lg focus:outline-none focus:bg-white/15 focus:border-[#7C3AED]/50 focus:ring-2 focus:ring-[#7C3AED]/20 transition-all duration-300"
               onChange={(e) => setSearchInput(e.target.value)}
               value={searchInput}
             />
-      
+
 
             {/* Amazingly Styled Transparent Dropdown with Custom Scrollbar */}
             {searchInput && (
               <div
-                className="absolute w-full mt-3 rounded-2xl max-h-72 overflow-y-auto bg-white/30 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/40 p-2 z-50 animate-in fade-in zoom-in-95 duration-200 
+                className="absolute w-full mt-3 rounded-2xl max-h-72 overflow-y-auto bg-gray-900/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-white/10 p-2 z-50 animate-in fade-in zoom-in-95 duration-200 
                 [&::-webkit-scrollbar]:w-2 
                 [&::-webkit-scrollbar-track]:bg-transparent
                 [&::-webkit-scrollbar-thumb]:bg-gray-400/30 
@@ -127,20 +126,20 @@ export default function Home() {
                   filteredSearchResults.map((event) => (
                     <div
                       key={event._id}
-                      className="group flex justify-between items-center px-4 py-3 mb-1 rounded-xl hover:bg-white/40 transition-all duration-200 cursor-pointer border border-transparent hover:border-white/30"
+                      className="group flex justify-between items-center px-4 py-3 mb-1 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer border border-transparent hover:border-white/10"
                       onClick={() => router.push(`/event/${event.eventId}`)}
                     >
                       <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800 group-hover:text-[#7C3AED] transition-colors">
+                        <span className="font-semibold text-white group-hover:text-[#7C3AED] transition-colors">
                           {event.event}
                         </span>
-                        <div className="flex items-center text-xs text-gray-600 mt-0.5">
+                        <div className="flex items-center text-xs text-white/60 mt-0.5">
                           {/* Location Icon Tiny */}
                           <svg className="w-3 h-3 mr-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                           <span className="truncate max-w-[150px]">{event.location}</span>
                         </div>
                       </div>
-                      
+
                       {/* Date Pill */}
                       <span className="text-[10px] font-bold text-[#7C3AED] bg-white/50 px-2 py-1 rounded-md shadow-sm border border-white/50 group-hover:bg-[#7C3AED] group-hover:text-white transition-colors">
                         {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -149,7 +148,7 @@ export default function Home() {
                   ))
                 ) : (
                   <div className="p-6 text-center">
-                    <p className="text-gray-500 font-medium">No events found</p>
+                    <p className="text-white/60 font-medium">No events found</p>
                   </div>
                 )}
               </div>
@@ -175,11 +174,11 @@ export default function Home() {
       </div>
 
       {/* --- UPCOMING EVENTS SECTION --- */}
-      <div className="flex flex-col min-h-screen p-8 shadow-xl m-0 bg-gradient-to-b from-transparent to-white/50">
-        <h2 className="text-4xl font-bold m-0 text-gray-800">Upcoming Events</h2>
-        
+      <div className="flex flex-col min-h-screen p-8 shadow-xl m-0">
+        <h2 className="text-4xl font-bold m-0 text-white">Upcoming Events</h2>
+
         <div className="flex flex-row justify-between items-end mb-6">
-          <p className="text-gray-500 ml-1 mt-2 text-lg">
+          <p className="text-white/70 ml-1 mt-2 text-lg">
             Discover the hottest events happening soon
           </p>
           <button
@@ -194,57 +193,57 @@ export default function Home() {
         {/* Changed from simple flex-wrap to a responsive grid of wide banners */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 m-4 justify-center">
           {loading ? (
-            <p className="text-gray-500 text-lg col-span-full text-center">Loading events...</p>
+            <p className="text-white/60 text-lg col-span-full text-center">Loading events...</p>
           ) : upcomingEvents.length === 0 ? (
-            <p className="text-gray-500 text-lg col-span-full text-center">No upcoming events available</p>
+            <p className="text-white/60 text-lg col-span-full text-center">No upcoming events available</p>
           ) : (
             // Show only the top 4 events
             upcomingEvents.slice(0, 4).map((event) => (
               <div
                 key={event._id}
                 onClick={() => router.push(`/event/${event.eventId}`)}
-                className="group relative flex flex-col md:flex-row h-auto md:h-56 w-full bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 cursor-pointer"
+                className="group relative flex flex-col md:flex-row h-auto md:h-56 w-full bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 cursor-pointer"
               >
                 {/* Banner Image Section (Left) */}
                 <div className="w-full md:w-2/5 h-48 md:h-full relative overflow-hidden">
-                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-                   {event.image ? (
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+                  {event.image ? (
                     <img
                       src={event.image}
                       alt={event.event}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400">No Image</span>
+                    <div className="w-full h-full bg-white/5 border border-white/10 flex items-center justify-center">
+                      <span className="text-white/60">No Image</span>
                     </div>
                   )}
                   {/* Date Badge */}
-                  <div className="absolute top-3 left-3 z-20 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm text-center min-w-[3rem]">
-                      <span className="block text-xs font-bold text-gray-500 uppercase">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
-                      <span className="block text-xl font-bold text-[#7C3AED]">{new Date(event.date).getDate()}</span>
+                  <div className="absolute top-3 left-3 z-20 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm text-center min-w-[3rem] border border-white/10">
+                    <span className="block text-xs font-bold text-white/60 uppercase">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
+                    <span className="block text-xl font-bold text-[#7C3AED]">{new Date(event.date).getDate()}</span>
                   </div>
                 </div>
 
                 {/* Banner Details Section (Right) */}
                 <div className="w-full md:w-3/5 p-6 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 truncate mb-2 group-hover:text-[#7C3AED] transition-colors">
+                    <h3 className="text-2xl font-bold text-white truncate mb-2 group-hover:text-[#7C3AED] transition-colors">
                       {event.event}
                     </h3>
-                    <div className="flex items-center text-gray-600 mb-2">
+                    <div className="flex items-center text-white/70 mb-2">
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                       <p className="text-sm truncate">{event.location}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center mt-4">
-                     <div className="text-sm text-gray-500 bg-white/50 px-3 py-1 rounded-full border border-white">
-                        {event.time}
-                     </div>
-                     <span className="text-[#7C3AED] font-medium text-sm group-hover:translate-x-1 transition-transform">
-                        Get Tickets &rarr;
-                     </span>
+                    <div className="text-sm text-white/70 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                      {event.time}
+                    </div>
+                    <span className="text-[#7C3AED] font-medium text-sm group-hover:translate-x-1 transition-transform">
+                      Get Tickets &rarr;
+                    </span>
                   </div>
                 </div>
               </div>
@@ -255,7 +254,7 @@ export default function Home() {
 
       {/* Chatbot Section */}
       <ChatbotRag user={user} />
-      
+
     </div>
   );
 }

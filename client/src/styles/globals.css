@@ -15,18 +15,27 @@ html, body {
     @apply bg-[#7C3AED] text-white font-bold py-2 px-4 rounded my-2 w-full hover:bg-[#6D28D9] transition;
   }
 
+  .btn-sm {
+    @apply inline-flex items-center justify-center bg-[#7C3AED] text-white font-semibold text-sm py-2 px-3 rounded-lg hover:bg-[#6D28D9] transition;
+  }
+
   .link {
-    @apply text-gray-800 px-4 py-2 rounded-md font-semibold  hover:text-[#7C3AED] transition no-underline;
+    @apply text-white/80 px-4 py-2 rounded-md font-semibold hover:text-[#7C3AED] hover:bg-white/5 transition no-underline;
      
   }
   
   .label{
-    @apply  text-sm font-medium mx-2;
-
+    @apply text-sm font-medium mx-2 text-white/80;
   }
   
 .input {
-  @apply border w-full p-2 rounded mb-2 bg-transparent;
+  @apply w-full p-2 rounded mb-2 bg-white/5 border border-white/15 text-white placeholder-white/60 outline-none;
+  @apply focus:border-white/30 focus:ring-2 focus:ring-violet-500/60;
+}
+
+.select {
+  @apply w-full p-2 rounded mb-2 bg-gray-900/40 border border-white/15 text-white outline-none cursor-pointer;
+  @apply focus:border-white/30 focus:ring-2 focus:ring-violet-500/60;
 }
 
 
