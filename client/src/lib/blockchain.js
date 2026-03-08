@@ -12,13 +12,19 @@ const ABI = [
     "event TicketMinted(uint256 indexed tokenId, address indexed to, string uri)"
 ];
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+// Contract address is safe to expose, but server routes also run in Node on Vercel.
+// Support both NEXT_PUBLIC_* and server-only naming.
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || process.env.CONTRACT_ADDRESS;
 const PRIVATE_KEY = process.env.PLATFORM_CUSTODY_PRIVATE_KEY;
 const RPC_URL = process.env.BLOCKCHAIN_RPC_URL;
 
 export async function getContract() {
-    if (!CONTRACT_ADDRESS || !PRIVATE_KEY || !RPC_URL) {
-        throw new Error("Missing blockchain configuration in environment variables");
+    const missing = [];
+    if (!CONTRACT_ADDRESS) missing.push("NEXT_PUBLIC_CONTRACT_ADDRESS (or CONTRACT_ADDRESS)");
+    if (!PRIVATE_KEY) missing.push("PLATFORM_CUSTODY_PRIVATE_KEY");
+    if (!RPC_URL) missing.push("BLOCKCHAIN_RPC_URL");
+    if (missing.length) {
+        throw new Error(`Missing blockchain configuration: ${missing.join(", ")}`);
     }
 
     const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -84,7 +90,7 @@ export async function mintTicketNFT(toAddress, metadataUri, royaltyNumerator = 5
                 try {
                     const parsed = contract.interface.parseLog(log);
                     return parsed;
-                } catch (e) {
+                } catch {
                     return null;
                 }
             }).find(parsed => parsed && parsed.name === "TicketMinted");
