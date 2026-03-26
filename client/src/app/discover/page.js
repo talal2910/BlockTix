@@ -196,7 +196,7 @@ export default function DiscoverPage() {
                   className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
                   onClick={() => handleEventClick(event)}
                 >
-                  <div className="h-40 bg-gradient-to-br from-purple-500/20 to-gray-900/10 flex items-center justify-center">
+                  <div className="h-40 bg-gradient-to-br from-[#FFA500]/20 to-gray-900/10 flex items-center justify-center">
                     {event.image ? (
                       <img
                         src={event.image}

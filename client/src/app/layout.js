@@ -16,9 +16,9 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen bg-gray-900 text-white relative overflow-x-hidden">
         {/* Global background (matches Profile page): glass base + soft gradient blobs */}
         <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-300/30 blur-[100px]"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
-          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-blue-300/20 blur-[80px]"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
         </div>
 
         <div className="relative z-10 min-h-screen">

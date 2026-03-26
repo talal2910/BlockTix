@@ -87,7 +87,7 @@ export default function Home() {
         <h1 className="text-4xl sm:text-6xl font-bold m-0 w-full sm:w-3/4 px-4 text-center z-10">
           Discover and attend events with{' '}
           <span
-            className={`text-[#7C3AED] inline-block transition-all duration-700 ease-out ${show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
+            className={`text-[#FFA500] inline-block transition-all duration-700 ease-out ${show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
               }`}
           >
             blockchain security
@@ -106,7 +106,7 @@ export default function Home() {
             <input
               type="text"
               placeholder="Search for events..."
-              className="w-full bg-white/10 border border-white/20 backdrop-blur-md text-white placeholder-white/60 rounded-full pl-6 pr-12 py-3 shadow-lg focus:outline-none focus:bg-white/15 focus:border-[#7C3AED]/50 focus:ring-2 focus:ring-[#7C3AED]/20 transition-all duration-300"
+              className="w-full bg-white/10 border border-white/20 backdrop-blur-md text-white placeholder-white/60 rounded-full pl-6 pr-12 py-3 shadow-lg focus:outline-none focus:bg-white/15 focus:border-[#FFA500]/50 focus:ring-2 focus:ring-[#FFA500]/20 transition-all duration-300"
               onChange={(e) => setSearchInput(e.target.value)}
               value={searchInput}
             />
@@ -130,7 +130,7 @@ export default function Home() {
                       onClick={() => router.push(`/event/${event.eventId}`)}
                     >
                       <div className="flex flex-col">
-                        <span className="font-semibold text-white group-hover:text-[#7C3AED] transition-colors">
+                        <span className="font-semibold text-white group-hover:text-[#FFA500] transition-colors">
                           {event.event}
                         </span>
                         <div className="flex items-center text-xs text-white/60 mt-0.5">
@@ -141,7 +141,7 @@ export default function Home() {
                       </div>
 
                       {/* Date Pill */}
-                      <span className="text-[10px] font-bold text-[#7C3AED] bg-white/50 px-2 py-1 rounded-md shadow-sm border border-white/50 group-hover:bg-[#7C3AED] group-hover:text-white transition-colors">
+                      <span className="text-[10px] font-bold text-[#FFA500] bg-white/50 px-2 py-1 rounded-md shadow-sm border border-white/50 group-hover:bg-[#FFA500] group-hover:text-white transition-colors">
                         {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
@@ -159,13 +159,13 @@ export default function Home() {
         {/* Buttons */}
         <div className="mt-8 z-10">
           <button
-            className="bg-[#7C3AED] text-white py-2 px-6 rounded-md cursor-pointer border-none shadow-md hover:bg-[#6D28D9] transition-colors"
+            className="bg-[#FFA500] text-white py-2 px-6 rounded-md cursor-pointer border-none shadow-md hover:bg-[#FFA500] transition-colors"
             onClick={() => router.push('/discover')}
           >
             Explore
           </button>
           <button
-            className="bg-[#7C3AED] text-white py-2 px-6 rounded-md m-2 cursor-pointer border-none shadow-md hover:bg-[#6D28D9] transition-colors"
+            className="bg-[#FFA500] text-white py-2 px-6 rounded-md m-2 cursor-pointer border-none shadow-md hover:bg-[#FFA500] transition-colors"
             onClick={handleClick}
           >
             Create Event
@@ -182,7 +182,7 @@ export default function Home() {
             Discover the hottest events happening soon
           </p>
           <button
-            className="text-[#7C3AED] font-semibold hover:underline cursor-pointer bg-transparent border-none text-lg flex items-center"
+            className="text-[#FFA500] font-semibold hover:underline cursor-pointer bg-transparent border-none text-lg flex items-center"
             onClick={() => router.push('/discover')}
           >
             View All &rarr;
@@ -221,14 +221,14 @@ export default function Home() {
                   {/* Date Badge */}
                   <div className="absolute top-3 left-3 z-20 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm text-center min-w-[3rem] border border-white/10">
                     <span className="block text-xs font-bold text-white/60 uppercase">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
-                    <span className="block text-xl font-bold text-[#7C3AED]">{new Date(event.date).getDate()}</span>
+                    <span className="block text-xl font-bold text-[#FFA500]">{new Date(event.date).getDate()}</span>
                   </div>
                 </div>
 
                 {/* Banner Details Section (Right) */}
                 <div className="w-full md:w-3/5 p-6 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-white truncate mb-2 group-hover:text-[#7C3AED] transition-colors">
+                    <h3 className="text-2xl font-bold text-white truncate mb-2 group-hover:text-[#FFA500] transition-colors">
                       {event.event}
                     </h3>
                     <div className="flex items-center text-white/70 mb-2">
@@ -237,11 +237,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center mt-4">
+                  <div className="flex flex-row justify-between">
                     <div className="text-sm text-white/70 bg-white/10 px-3 py-1 rounded-full border border-white/10">
                       {event.time}
                     </div>
-                    <span className="text-[#7C3AED] font-medium text-sm group-hover:translate-x-1 transition-transform">
+                    <span className="text-[#FFA500] font-medium text-sm group-hover:translate-x-1 transition-transform pr-16">
                       Get Tickets
                     </span>
                   </div>

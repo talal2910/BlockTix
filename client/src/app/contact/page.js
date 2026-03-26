@@ -13,7 +13,7 @@ const ContactCard = ({ icon, title, content, link, linkLabel }) => {
     <div className="group relative w-full max-w-[320px] bg-white/20 backdrop-blur-md border border-white/30 p-8 rounded-3xl shadow-2xl transition-all duration-500 hover:bg-white/30 hover:-translate-y-3 flex flex-col items-center text-center">
       
       {/* Glow Effect behind icon */}
-      <div className="absolute -top-4 -right-4 w-24 h-24 bg-violet-500/20 rounded-full blur-2xl group-hover:bg-violet-500/40 transition-all duration-500" />
+      <div className="absolute -top-4 -right-4 w-24 h-24 bg-[#FFA500]/20 rounded-full blur-2xl group-hover:bg-[#FFA500]/40 transition-all duration-500" />
 
       {/* Icon Container */}
       <div className="mb-6 p-4 rounded-2xl bg-white/20 shadow-inner transition-transform duration-500 group-hover:rotate-[360deg]">
@@ -27,7 +27,7 @@ const ContactCard = ({ icon, title, content, link, linkLabel }) => {
       
       <a 
         href={formattedLink} 
-        className="mt-auto px-6 py-2 rounded-full bg-violet-600 text-white font-semibold shadow-lg hover:bg-violet-700 hover:shadow-violet-500/40 transition-all duration-300 active:scale-95"
+        className="mt-auto px-6 py-2 rounded-full bg-[#FFA500] text-white font-semibold shadow-lg hover:bg-[#FFA500] hover:shadow-[#FFA500]/40 transition-all duration-300 active:scale-95"
       >
         {linkLabel || link}
       </a>
@@ -41,15 +41,15 @@ function Contact() {
     <section className="relative py-20 px-6  overflow-hidden min-h-screen flex items-center">
       
       {/* Abstract Background Blobs for Glass depth */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-violet-200/50 blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-200/50 blur-[120px]" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#FFA500]/25 blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#FFA500]/15 blur-[120px]" />
 
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <span className="text-violet-600 font-bold tracking-widest uppercase text-sm">Get in touch</span>
+          <span className="text-[#FFA500] font-bold tracking-widest uppercase text-sm">Get in touch</span>
           <h1 className="text-5xl md:text-6xl font-black text-white mt-4 mb-6 tracking-tight">
-            We Would love to <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">hear from you.</span>
+            We Would love to <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFA500] to-[#FFA500]">hear from you.</span>
           </h1>
           <p className="text-lg text-white/70 max-w-2xl mx-auto font-medium">
             Have questions about BlockTix? Our team is here to help you secure the future of ticketing.

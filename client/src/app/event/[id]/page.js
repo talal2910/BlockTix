@@ -138,7 +138,7 @@ function Event() {
         </div>
 
         {/* TICKETS (ALIGNED + STICKY) */}
-        <div className="lg:col-span-1 lg:row-span-2 sticky top-8 rounded-3xl border border-white/10 bg-white/10 p-8 shadow-xl backdrop-blur-md">
+        <div className="lg:col-span-1 lg:row-span-2 top-8 rounded-3xl border border-white/10 bg-white/10 p-8 shadow-xl backdrop-blur-md">
           <h2 className="mb-8 text-center text-2xl font-bold text-white">
             Get Tickets
           </h2>
@@ -155,7 +155,7 @@ function Event() {
                 </div>
               </div>
             ) : (
-              <div className="text-4xl font-extrabold text-purple-600">
+              <div className="text-4xl font-extrabold text-[#FFA500]">
                 Rs {event.price}
               </div>
             )}
@@ -164,9 +164,9 @@ function Event() {
           <button
             onClick={handleBuyTicket}
             disabled={event.remainingTickets === 0}
-            className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition
+            className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition cursor-pointer
               ${event.remainingTickets > 0
-                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
+                ? 'bg-gradient-to-r from-[#FFA500] to-indigo-600 text-white'
                 : 'bg-white/10 text-white/50 cursor-not-allowed'
               }`}
           >

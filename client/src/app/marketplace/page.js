@@ -249,22 +249,22 @@ function MarketplacePage() {
                       {/* Event Details */}
                       <div className="space-y-2 mb-4 text-white/70">
                         <div className="flex items-center gap-2">
-                          <FaCalendarAlt className="text-indigo-500" />
+                          <FaCalendarAlt className="text-[#FFA500]" />
                           <span>{formatDate(event.date)}</span>
                         </div>
                         {event.time && (
                           <div className="flex items-center gap-2">
-                            <FaClock className="text-indigo-500" />
+                            <FaClock className="text-[#FFA500]" />
                             <span>{event.time}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <FaMapMarkerAlt className="text-indigo-500" />
+                          <FaMapMarkerAlt className="text-[#FFA500]" />
                           <span className="line-clamp-1">{event.location}</span>
                         </div>
                         {event.category && (
                           <div className="flex items-center gap-2">
-                            <FaTag className="text-indigo-500" />
+                            <FaTag className="text-[#FFA500]" />
                             <span>{event.category}</span>
                           </div>
                         )}
@@ -274,7 +274,7 @@ function MarketplacePage() {
                       <div className="border-t border-white/10 pt-4 mb-4">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-white/70">Resale Price:</span>
-                          <span className="text-2xl font-bold text-indigo-600">
+                          <span className="text-2xl font-bold text-[#FFA500]">
                             Rs {ticket.resalePrice?.toFixed(2) || '0.00'}
                           </span>
                         </div>
@@ -310,8 +310,8 @@ function MarketplacePage() {
                         className={`w-full py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${isOwned
                           ? 'bg-white/10 text-white/50 cursor-not-allowed border border-white/10'
                           : isBuying
-                            ? 'bg-indigo-400 text-white cursor-wait'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            ? 'bg-[#FFA500]/80 text-white cursor-wait'
+                            : 'bg-[#FFA500] text-white hover:opacity-90'
                           }`}
                       >
                         {isBuying ? (

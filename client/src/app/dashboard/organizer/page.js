@@ -55,10 +55,10 @@ function OrganizerDashboard() {
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
   const glassContent = "bg-transparent";
   const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
-  const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
-  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:bg-white/15 outline-none transition text-white";
+  const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
+  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white";
   const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition text-white/80 font-medium backdrop-blur-sm shadow-sm";
-  const primaryButton = "px-6 py-2.5 bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition font-medium backdrop-blur-sm";
+  const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
 
   // --- FETCH DATA ---
   const calculateAnalytics = React.useCallback((events) => {
@@ -313,9 +313,9 @@ function OrganizerDashboard() {
       <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
         {/* Background Blobs */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-300/30 blur-[100px]"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
-          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-blue-300/20 blur-[80px]"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
         </div>
 
         <div className={`max-w-7xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[850px]`}>
@@ -324,7 +324,7 @@ function OrganizerDashboard() {
           <aside className={`w-full md:w-72 flex-shrink-0 flex flex-col justify-between p-6 ${glassSidebar}`}>
             <div>
               <div className="mb-8 pl-2">
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FFA500] to-[#FFA500]">
                   Organizer
                 </h2>
                 <p className="text-xs text-white/60 font-medium tracking-wider uppercase mt-1">Dashboard</p>
@@ -368,7 +368,7 @@ function OrganizerDashboard() {
                       <DollarIcon />
                     </div>
                     <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
-                    <h3 className="text-3xl font-bold text-indigo-700">${analytics.totalRevenue.toLocaleString()}</h3>
+                      <h3 className="text-3xl font-bold text-[#FFA500]">${analytics.totalRevenue.toLocaleString()}</h3>
                   </div>
 
                   {/* Tickets Sold */}
@@ -377,7 +377,7 @@ function OrganizerDashboard() {
                       <UsersIcon />
                     </div>
                     <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Tickets Sold</p>
-                    <h3 className="text-3xl font-bold text-purple-700">{analytics.totalTicketsSold}</h3>
+                    <h3 className="text-3xl font-bold text-[#FFA500]">{analytics.totalTicketsSold}</h3>
                   </div>
 
                   {/* Active Events */}
@@ -386,7 +386,7 @@ function OrganizerDashboard() {
                       <EventIcon />
                     </div>
                     <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Active Events</p>
-                    <h3 className="text-3xl font-bold text-blue-700">{organizerEvents.length}</h3>
+                      <h3 className="text-3xl font-bold text-[#FFA500]">{organizerEvents.length}</h3>
                   </div>
                 </div>
 
@@ -408,7 +408,7 @@ function OrganizerDashboard() {
                           <tr key={ev._id} className="border-b border-white/10 hover:bg-white/10 transition">
                             <td className="py-3 pl-2 font-medium text-white">{ev.event}</td>
                             <td className="py-3 text-white/60">{new Date(ev.date).toLocaleDateString()}</td>
-                            <td className="py-3 font-bold text-indigo-600">{ev.totalTickets - ev.remainingTickets}</td>
+                            <td className="py-3 font-bold text-[#FFA500]">{ev.totalTickets - ev.remainingTickets}</td>
                             <td className="py-3">
                               {ev.remainingTickets === 0 ?
                                 <span className="text-red-200 text-xs font-bold bg-red-500/10 px-2 py-1 rounded border border-red-400/20">Sold Out</span> :
@@ -505,11 +505,11 @@ function OrganizerDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
                       <div className="text-xs text-white/60 font-semibold uppercase tracking-wider">Total Earned</div>
-                      <div className="text-xl font-bold text-indigo-700">Rs {Number(royaltyReport.totalRoyaltyEarned || 0).toFixed(2)}</div>
+                      <div className="text-xl font-bold text-[#FFA500]">Rs {Number(royaltyReport.totalRoyaltyEarned || 0).toFixed(2)}</div>
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
                       <div className="text-xs text-white/60 font-semibold uppercase tracking-wider">Resales</div>
-                      <div className="text-xl font-bold text-purple-700">{royaltyReport.resaleCount || 0}</div>
+                      <div className="text-xl font-bold text-[#FFA500]">{royaltyReport.resaleCount || 0}</div>
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-end justify-end">
                       <button
@@ -541,7 +541,7 @@ function OrganizerDashboard() {
                             <td className="py-3 text-white/60">
                               {row.resale?.transactionDate ? new Date(row.resale.transactionDate).toLocaleString() : '—'}
                             </td>
-                            <td className="py-3 font-bold text-indigo-700">Rs {Number(row.resale?.royaltyAmount || 0).toFixed(2)}</td>
+                            <td className="py-3 font-bold text-[#FFA500]">Rs {Number(row.resale?.royaltyAmount || 0).toFixed(2)}</td>
                             <td className="py-3 text-white/80">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
                             <td className="py-3 text-white/70">{row.resale?.sellerId || '—'}</td>
                             <td className="py-3 text-white/70">{row.resale?.buyerId || '—'}</td>
@@ -570,7 +570,7 @@ function OrganizerDashboard() {
 
                 <div className="grid grid-cols-1 gap-4">
                   {organizerEvents.map((ev) => (
-                    <div key={ev._id} className={`${glassCard} p-5 flex flex-col md:flex-row items-center justify-between gap-4 group hover:border-indigo-300/50 transition`}>
+                    <div key={ev._id} className={`${glassCard} p-5 flex flex-col md:flex-row items-center justify-between gap-4 group hover:border-[#FFA500]/30 transition`}>
                       <div className="flex items-center gap-4 w-full md:w-auto">
                         <div className="h-16 w-16 rounded-xl bg-white/5 overflow-hidden flex-shrink-0 shadow-sm relative border border-white/10">
                           {ev.image ? (
@@ -586,7 +586,7 @@ function OrganizerDashboard() {
                             <span>•</span>
                             <span>{ev.time}</span>
                             <span>•</span>
-                            <span className="font-semibold text-indigo-600">${ev.price}</span>
+                            <span className="font-semibold text-[#FFA500]">${ev.price}</span>
                           </div>
                         </div>
                       </div>
@@ -685,9 +685,9 @@ function OrganizerDashboard() {
                     </div>
 
                     {/* Early Bird Section - Enhanced spacing */}
-                    <div className="p-6 bg-indigo-500/10 rounded-2xl border border-indigo-400/20 shadow-sm backdrop-blur-sm">
+                    <div className="p-6 bg-[#FFA500]/10 rounded-2xl border border-[#FFA500]/20 shadow-sm backdrop-blur-sm">
                       <div className="flex items-center gap-3 mb-6">
-                        <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600 cursor-pointer shadow-sm"
+                        <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-[#FFA500] cursor-pointer shadow-sm"
                           checked={formData.ebEnabled} onChange={e => setFormData({ ...formData, ebEnabled: e.target.checked })} />
                         <label htmlFor="ebCheck" className="font-bold text-white cursor-pointer select-none text-sm">Enable Early Bird Discount</label>
                       </div>
@@ -715,7 +715,7 @@ function OrganizerDashboard() {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row gap-4 pt-6">
-                      <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-indigo-200/50 outline-none hover:scale-[1.01] transition-transform`}>
+                      <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-[#FFA500]/20 outline-none hover:scale-[1.01] transition-transform`}>
                         Create Event
                       </button>
                       <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} flex-1 py-4 outline-none`}>

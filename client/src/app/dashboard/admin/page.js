@@ -447,7 +447,7 @@ function AdminTabs() {
                                   {isOrganizerView && (
                                     <button
                                       onClick={() => updateUserRole(u._id)}
-                                      className="px-3 py-1.5 text-xs font-medium bg-purple-500/10 text-purple-200 border border-purple-400/20 rounded-lg hover:bg-purple-500/15 transition-colors"
+                                      className="px-3 py-1.5 text-xs font-medium bg-[#FFA500]/10 text-[#FFA500]/80 border border-[#FFA500]/20 rounded-lg hover:bg-[#FFA500]/15 transition-colors"
                                     >
                                       Make Admin
                                     </button>
@@ -507,7 +507,7 @@ function AdminTabs() {
                         <div className="flex gap-2 mt-4">
                           <button
                             onClick={() => updateEvent(event._id)}
-                            className="flex-1 py-2 text-sm font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            className="flex-1 py-2 text-sm font-medium bg-[#FFA500] text-white rounded-lg hover:bg-[#FFA500] transition-colors"
                           >
                             Update
                           </button>
@@ -592,7 +592,7 @@ function AdminTabs() {
                               <td className="px-6 py-4 whitespace-nowrap">{new Date(e.date).toLocaleDateString()}</td>
                               <td className="px-6 py-4">{e.location}</td>
                               <td className="px-6 py-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-200 border border-indigo-400/20">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FFA500]/10 text-[#FFA500]/90 border border-[#FFA500]/20">
                                   {e.category}
                                 </span>
                               </td>

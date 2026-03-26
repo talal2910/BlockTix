@@ -85,7 +85,7 @@ export default function LoginPage() {
           <div className="w-full flex flex-col gap-1">
             <label className='text-sm font-semibold text-white/80 ml-1'>Email</label>
             <input
-              className={`w-90 p-3 rounded-xl bg-white/10 border outline-none transition-all focus:ring-2 focus:ring-purple-500/50 text-white placeholder-white/60 ${
+              className={`w-90 p-3 rounded-xl bg-white/10 border outline-none transition-all focus:ring-2 focus:ring-[#FFA500]/50 text-white placeholder-white/60 ${
                 emailError ? 'border-red-500' : 'border-white/20'
               } ${isLoading || isSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
               type="email"
@@ -104,7 +104,7 @@ export default function LoginPage() {
           <div className="w-full flex flex-col gap-1">
             <label className='text-sm font-semibold text-white/80 ml-1'>Password</label>
             <input
-              className={`w-90 p-3 rounded-xl bg-white/10 border border-white/20 outline-none transition-all focus:ring-2 focus:ring-purple-500/50 text-white placeholder-white/60 ${
+              className={`w-90 p-3 rounded-xl bg-white/10 border border-white/20 outline-none transition-all focus:ring-2 focus:ring-[#FFA500]/50 text-white placeholder-white/60 ${
                 isLoading || isSuccess ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               type="password"
@@ -120,9 +120,9 @@ export default function LoginPage() {
           <div className="flex flex-col space-y-1 py-1">
             <p className='text-xs text-white/70'>
               Dont have an account?{' '}
-              <Link href="/signup" className={`text-purple-700 font-bold hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>Sign up</Link>
+              <Link href="/signup" className={`text-[#FFA500] font-bold hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>Sign up</Link>
             </p>
-            <Link href="/resetPassword" title="Forgot Password?" className={`text-xs font-bold text-purple-300 hover:underline w-fit ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
+            <Link href="/resetPassword" title="Forgot Password?" className={`text-xs font-bold text-[#FFA500]/70 hover:underline w-fit ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
               Forgot Password?
             </Link>
           </div>
@@ -131,7 +131,7 @@ export default function LoginPage() {
           <button 
             type="submit" 
             disabled={isLoading || isSuccess}
-            className={`w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-900/20 transition-all active:scale-95 flex justify-center items-center ${
+            className={`w-full bg-[#FFA500] hover:bg-[#FFA500] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#FFA500]/20 transition-all active:scale-95 flex justify-center items-center ${
               (isLoading || isSuccess) ? 'opacity-80 cursor-not-allowed' : ''
             }`}
           >

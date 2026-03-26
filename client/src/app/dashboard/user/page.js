@@ -193,10 +193,10 @@ export default function Dashboard() {
       );
 
     return (
-      <div className="bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg shadow-md hover:shadow-lg hover:shadow-purple-300/20 transition w-full overflow-hidden relative">
+      <div className="bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition w-full overflow-hidden relative">
         {/* Status badges */}
         {ticket.isForResale && (
-          <div className="absolute top-3 right-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow">
+          <div className="absolute top-3 right-3 bg-[#FFA500] text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow">
             Listed for Resale
           </div>
         )}
@@ -235,11 +235,11 @@ export default function Dashboard() {
             Date: {new Date(event.date).toLocaleDateString()}
           </p>
           <p className="text-gray-700 dark:text-white/70 text-sm">Time: {event.time}</p>
-          <p className="text-purple-600 font-medium mt-2 text-sm">
+          <p className="text-[#FFA500] font-medium mt-2 text-sm">
             Price: Rs {event.price}
           </p>
           {ticket.isForResale && (
-            <p className="text-blue-500 dark:text-blue-400 font-medium text-sm">
+            <p className="text-[#FFA500] font-medium text-sm">
               Resale Price: Rs {ticket.resalePrice}
             </p>
           )}
@@ -282,21 +282,21 @@ export default function Dashboard() {
               <>
                 <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
                   <p className="text-gray-700 dark:text-white/70">Total Tickets</p>
-                  <h3 className="text-3xl font-bold text-purple-600 mt-1">
+                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">
                     {tickets.length}
                   </h3>
                 </div>
 
                 <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
                   <p className="text-gray-700 dark:text-white/70">Upcoming Events</p>
-                  <h3 className="text-3xl font-bold text-purple-600 mt-1">
+                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">
                     {upcomingTickets.length}
                   </h3>
                 </div>
 
                 <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
                   <p className="text-gray-700 dark:text-white/70">Total Spent</p>
-                  <h3 className="text-3xl font-bold text-purple-600 mt-1">
+                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">
                     Rs {totalSpent}
                   </h3>
                 </div>
@@ -311,7 +311,7 @@ export default function Dashboard() {
             <button
               onClick={() => setActiveTab("upcoming")}
               className={`flex-1 min-w-[140px] text-center px-6 py-2 rounded-full font-semibold transition-all duration-300 ease-in-out ${activeTab === "upcoming"
-                ? "bg-purple-600 text-white shadow-md"
+                ? "bg-[#FFA500] text-white shadow-md"
                 : "bg-black/5 dark:bg-white/5 text-gray-700 dark:text-white/80 hover:bg-black/10 dark:hover:bg-white/10"
                 }`}
             >
@@ -321,7 +321,7 @@ export default function Dashboard() {
             <button
               onClick={() => setActiveTab("past")}
               className={`flex-1 min-w-[140px] text-center px-6 py-2 rounded-full font-semibold transition-all duration-300 ease-in-out ${activeTab === "past"
-                ? "bg-purple-600 text-white shadow-md"
+                ? "bg-[#FFA500] text-white shadow-md"
                 : "bg-black/5 dark:bg-white/5 text-gray-700 dark:text-white/80 hover:bg-black/10 dark:hover:bg-white/10"
                 }`}
             >
@@ -414,7 +414,7 @@ export default function Dashboard() {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100" />
+                        <div className="w-full h-full bg-gradient-to-br from-[#FFA500]/20 to-indigo-100" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4 text-left">
@@ -532,7 +532,7 @@ export default function Dashboard() {
                         <button
                           onClick={() => handleClaim(selectedTicket.ticketId)}
                           disabled={claiming}
-                          className="w-full py-2.5 text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+                          className="w-full py-2.5 text-sm bg-[#FFA500] text-white rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
                         >
                           {claiming ? "Transferring..." : "Claim to My MetaMask"}
                         </button>
@@ -550,7 +550,7 @@ export default function Dashboard() {
                             }
                           }}
                           disabled={reselling}
-                          className="w-full py-2.5 text-sm bg-white/10 border border-purple-400/30 text-purple-200 rounded-lg font-semibold hover:bg-white/15 transition disabled:opacity-50"
+                          className="w-full py-2.5 text-sm bg-white/10 border border-[#FFA500]/30 text-[#FFA500]/80 rounded-lg font-semibold hover:bg-white/15 transition disabled:opacity-50"
                         >
                           {reselling ? "Listing..." : "List for Resale"}
                         </button>
@@ -559,7 +559,7 @@ export default function Dashboard() {
                       {/* Currently listed — show status + cancel button */}
                       {selectedTicket.isForResale && (
                         <>
-                          <div className="p-4 bg-blue-500/10 text-blue-200 rounded-xl text-sm font-medium border border-blue-400/20">
+                          <div className="p-4 bg-[#FFA500]/10 text-[#FFA500]/90 rounded-xl text-sm font-medium border border-[#FFA500]/20">
                             ✓ Listed for resale at Rs {selectedTicket.resalePrice}
                           </div>
                           <button
@@ -592,14 +592,14 @@ export default function Dashboard() {
                             }
                           }}
                           disabled={reselling}
-                          className="w-full py-2.5 text-sm bg-white/10 border border-purple-400/30 text-purple-200 rounded-lg font-semibold hover:bg-white/15 transition disabled:opacity-50"
+                          className="w-full py-2.5 text-sm bg-white/10 border border-[#FFA500]/30 text-[#FFA500]/80 rounded-lg font-semibold hover:bg-white/15 transition disabled:opacity-50"
                         >
                           {reselling ? "Listing (returning to platform custody)..." : "List for Resale"}
                         </button>
                       )}
                       {selectedTicket.isForResale && (
                         <>
-                          <div className="p-4 bg-blue-500/10 text-blue-200 rounded-xl text-sm font-medium border border-blue-400/20">
+                          <div className="p-4 bg-[#FFA500]/10 text-[#FFA500]/90 rounded-xl text-sm font-medium border border-[#FFA500]/20">
                             ✓ Listed for resale at Rs {selectedTicket.resalePrice}
                           </div>
                           <button

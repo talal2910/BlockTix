@@ -160,12 +160,12 @@ const RagChatbot = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 flex items-center justify-center z-50 group"
+        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-[#FFA500] to-[#FFA500] text-white rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 flex items-center justify-center z-50 group"
         aria-label="Open BlockTix AI Assistant"
       >
         <Bot className="w-8 h-8 group-hover:rotate-12 transition-transform" />
         <span className={`absolute -top-2 -right-2 w-5 h-5 ${isConnected ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white animate-pulse`} />
-        <Database className="w-3 h-3 absolute -bottom-1 -right-1 text-white bg-blue-500 rounded-full p-0.5" />
+        <Database className="w-3 h-3 absolute -bottom-1 -right-1 text-white bg-[#FFA500] rounded-full p-0.5" />
       </button>
     );
   }
@@ -179,11 +179,11 @@ const RagChatbot = () => {
         maxWidth: 'calc(100vw - 3rem)'
       }}
     >
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#FFA500] to-[#FFA500] text-white p-4 rounded-t-2xl flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm relative">
             <Bot className="w-6 h-6" />
-            <Database className="w-3 h-3 absolute -bottom-0.5 -right-0.5 text-white bg-blue-500 rounded-full p-0.5" />
+            <Database className="w-3 h-3 absolute -bottom-0.5 -right-0.5 text-white bg-[#FFA500] rounded-full p-0.5" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">BlockTix AI Assistant</h3>
@@ -215,14 +215,14 @@ const RagChatbot = () => {
                 className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
-                  ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
-                  : 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                  ? 'bg-[#FFA500]'
+                  : 'bg-[#FFA500]'
                   }`}>
                   {message.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                 </div>
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-3 ${message.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
+                    ? 'bg-[#FFA500] text-white'
                     : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
                     }`}
                 >
@@ -244,7 +244,7 @@ const RagChatbot = () => {
 
             {isLoading && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#FFA500] flex items-center justify-center flex-shrink-0">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
@@ -271,7 +271,7 @@ const RagChatbot = () => {
                 {quickActionCategories.map((category, catIndex) => (
                   <div key={catIndex} className="space-y-2">
                     <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
-                      <category.icon className="w-4 h-4 text-indigo-600" />
+                      <category.icon className="w-4 h-4 text-[#FFA500]" />
                       <span>{category.title}</span>
                     </div>
                     <div className="grid grid-cols-1 gap-1.5 pl-6">
@@ -279,9 +279,9 @@ const RagChatbot = () => {
                         <button
                           key={actionIndex}
                           onClick={() => handleQuickAction(action.message)}
-                          className="flex items-center gap-2 p-2 bg-white hover:bg-indigo-50 border border-gray-200 rounded-lg transition-all text-left group text-xs"
+                          className="flex items-center gap-2 p-2 bg-white hover:bg-[#FFA500]/10 border border-gray-200 rounded-lg transition-all text-left group text-xs"
                         >
-                          <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full group-hover:scale-125 transition-transform" />
+                          <div className="w-1.5 h-1.5 bg-[#FFA500] rounded-full group-hover:scale-125 transition-transform" />
                           <span className="text-gray-700 font-medium">{action.label}</span>
                         </button>
                       ))}
@@ -302,12 +302,12 @@ const RagChatbot = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Ask about events, tickets, or get help..."
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFA500]/60 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               />
               <button
                 onClick={sendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center min-w-[48px]"
+                className="px-4 py-3 bg-[#FFA500] text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center min-w-[48px]"
               >
                 <Send className="w-5 h-5" />
               </button>

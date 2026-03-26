@@ -40,9 +40,9 @@ function UserProfile() {
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
   const glassContent = "bg-transparent"; // Content sits directly on background
   const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl"; // Inner cards
-  const glassInput = "w-full p-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400/70 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
+  const glassInput = "w-full p-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
   const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition text-white font-medium backdrop-blur-sm shadow-sm";
-  const primaryButton = "px-6 py-2.5 bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition font-medium backdrop-blur-sm";
+  const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
 
   useEffect(() => {
     if (!authUser?.uid) return;
@@ -159,7 +159,7 @@ function UserProfile() {
     try {
       setStatusMsg({ type: 'loading', msg: 'Deleting account...' });
       await deleteAccount();
-      const res = await fetch(`/api/users/${userData._id}`, { method: 'DELETE' });
+      await fetch(`/api/users/${userData._id}`, { method: 'DELETE' });
       await logout();
       router.push('/');
     } catch (err) {
@@ -222,9 +222,9 @@ function UserProfile() {
       <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
         {/* Decorative Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-300/30 blur-[100px]"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
-          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-blue-300/20 blur-[80px]"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
         </div>
 
         <div className={`max-w-6xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[800px]`}>
@@ -236,10 +236,10 @@ function UserProfile() {
                 <h3 className="text-xl font-bold text-white mb-2">Security Verification</h3>
                 <p className="text-white/70 mb-4 text-sm">Please confirm your password to proceed with sensitive changes.</p>
                 <form onSubmit={handleReauthSubmit} className="space-y-4">
-                  <input type="password" placeholder="Current Password" value={reauthPassword} onChange={(e) => setReauthPassword(e.target.value)} className="w-full p-3 bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" autoFocus />
+                  <input type="password" placeholder="Current Password" value={reauthPassword} onChange={(e) => setReauthPassword(e.target.value)} className="w-full p-3 bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 outline-none" autoFocus />
                   <div className="flex gap-3 justify-end">
                     <button type="button" onClick={() => { setShowReauthModal(false); setPendingAction(null); }} className="px-4 py-2 text-white/70 hover:bg-white/10 rounded-lg">Cancel</button>
-                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Verify</button>
+                    <button type="submit" className="px-4 py-2 bg-[#FFA500] text-white rounded-lg hover:opacity-90">Verify</button>
                   </div>
                 </form>
               </div>
@@ -250,7 +250,7 @@ function UserProfile() {
           <aside className={`w-full md:w-72 flex-shrink-0 flex flex-col justify-between p-6 ${glassSidebar}`}>
             <div>
               <div className="mb-8 pl-2">
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FFA500] to-[#FFA500]">
                   Account
                 </h2>
                 <p className="text-xs text-white/60 font-medium tracking-wider uppercase mt-1">Settings & Privacy</p>
@@ -283,7 +283,7 @@ function UserProfile() {
           <main className={`flex-1 p-6 md:p-10 ${glassContent} overflow-y-auto`}>
 
             {statusMsg.msg && (
-              <div className={`mb-6 p-4 rounded-xl border backdrop-blur-md shadow-sm text-sm font-medium animate-fade-in ${statusMsg.type === 'success' ? 'bg-green-100/60 border-green-200 text-green-800' : statusMsg.type === 'error' ? 'bg-red-100/60 border-red-200 text-red-800' : 'bg-blue-100/60 border-blue-200 text-blue-800'}`}>
+              <div className={`mb-6 p-4 rounded-xl border backdrop-blur-md shadow-sm text-sm font-medium animate-fade-in ${statusMsg.type === 'success' ? 'bg-green-100/60 border-green-200 text-green-800' : statusMsg.type === 'error' ? 'bg-red-100/60 border-red-200 text-red-800' : 'bg-[#FFA500]/10 border-[#FFA500]/20 text-[#FFA500]'}`}>
                 {statusMsg.msg}
               </div>
             )}
@@ -293,13 +293,13 @@ function UserProfile() {
               <div className="space-y-6 animate-fade-in">
                 {/* Hero Profile Header */}
                 <div className={`${glassCard} p-6 flex flex-col md:flex-row items-center md:items-start gap-6`}>
-                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#FFA500] to-[#FFA500] flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
                     {getInitials(userData?.name)}
                   </div>
                   <div className="text-center md:text-left flex-1">
                     <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
                       <h2 className="text-2xl font-bold text-white">{userData?.name}</h2>
-                      <span className="inline-block px-3 py-1 bg-indigo-100/50 text-indigo-700 border border-indigo-200/50 rounded-full text-xs font-bold uppercase tracking-wider">
+                      <span className="inline-block px-3 py-1 bg-[#FFA500]/10 text-[#FFA500]/90 border border-[#FFA500]/20 rounded-full text-xs font-bold uppercase tracking-wider">
                         {userData?.role}
                       </span>
                     </div>
@@ -314,7 +314,7 @@ function UserProfile() {
 
                 {/* Edit Form */}
                 {isEditingProfile && (
-                  <div className={`${glassCard} p-6 md:p-8 border-l-4 border-l-indigo-500`}>
+                  <div className={`${glassCard} p-6 md:p-8 border-l-4 border-l-[#FFA500]`}>
                     <h3 className="text-lg font-bold text-white mb-4">Edit Details</h3>
                     <form onSubmit={handleUpdateProfile} className="space-y-6">
                       <div>
@@ -332,7 +332,7 @@ function UserProfile() {
                 {/* Info Grid (More Details Added) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`${glassCard} p-5`}>
-                    <div className="flex items-center gap-3 mb-2 text-indigo-600">
+                    <div className="flex items-center gap-3 mb-2 text-[#FFA500]">
                       <IdIcon />
                       <span className="font-semibold text-sm">Account ID</span>
                     </div>
@@ -342,7 +342,7 @@ function UserProfile() {
                   </div>
 
                   <div className={`${glassCard} p-5`}>
-                    <div className="flex items-center gap-3 mb-2 text-purple-600">
+                    <div className="flex items-center gap-3 mb-2 text-[#FFA500]">
                       <CalendarIcon />
                       <span className="font-semibold text-sm">Member Status</span>
                     </div>

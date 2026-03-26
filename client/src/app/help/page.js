@@ -83,7 +83,7 @@ const HelpCenter = () => {
         {/* Header */}
         <div className="p-6 bg-white/10 border-b border-white/10 flex items-center gap-4">
           <div className="relative">
-            <div className="w-12 h-12 bg-violet-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-violet-200">
+            <div className="w-12 h-12 bg-[#FFA500] rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-[#FFA500]/20">
               BT
             </div>
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black/50 rounded-full"></div>
@@ -100,7 +100,7 @@ const HelpCenter = () => {
             <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] px-5 py-3 rounded-2xl text-[15px] ${
                 m.sender === 'user' 
-                ? 'bg-violet-600 text-white rounded-tr-none' 
+                ? 'bg-[#FFA500] text-white rounded-tr-none' 
                 : 'bg-white/10 text-white/80 border border-white/10 rounded-tl-none shadow-sm'
               }`}>
                 {m.text}
@@ -117,9 +117,9 @@ const HelpCenter = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search events or ask for help..."
-            className="flex-1 bg-white/10 border border-white/10 focus:border-violet-500/30 focus:bg-white/15 rounded-2xl px-5 py-3 outline-none transition-all text-white placeholder-white/60"
+            className="flex-1 bg-white/10 border border-white/10 focus:border-[#FFA500]/30 focus:bg-white/15 rounded-2xl px-5 py-3 outline-none transition-all text-white placeholder-white/60"
           />
-          <button className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-violet-200 transition-all active:scale-95">
+          <button className="bg-[#FFA500] hover:bg-[#FFA500] text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-[#FFA500]/20 transition-all active:scale-95">
             Ask
           </button>
         </form>
