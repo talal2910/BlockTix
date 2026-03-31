@@ -42,12 +42,12 @@ html, body {
 /* Prevent browser autofill / validation from forcing white backgrounds */
 input:-webkit-autofill,
 input:-webkit-autofill:focus,
-input:-webkit-autofill:hover,
-input:valid {
+input:-webkit-autofill:hover {
   background-color: transparent !important;
   -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
   box-shadow: 0 0 0px 1000px transparent inset !important;
   color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
   transition: background-color 9999s ease-in-out 0s; /* prevents flicker */
 }
 

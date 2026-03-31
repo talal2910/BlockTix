@@ -1,407 +1,426 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
+import path from 'path';
+import { pathToFileURL } from 'url';
 import dbConnect from '@/lib/dbConnect';
 import Event from '@/models/Event';
 import User from '@/models/User';
 import Ticket from '@/models/Ticket';
+import ClickPreference from '@/models/ClickPreference';
 import knowledgeBase from '@/lib/knowledge_base.json';
 
-// --- UTILITIES ---
+export const runtime = 'nodejs';
 
-const STOP_WORDS = new Set(['how', 'are', 'you', 'the', 'is', 'at', 'in', 'on', 'of', 'for', 'about', 'tell', 'me', 'please', 'can', 'could', 'would', 'do', 'does', 'it', 'its', 'my', 'your', 'with', 'what',
-  'where', 'when', 'who', 'i', 'was', 'were', 'been', 'be', 'a', 'an', 'and', 'or', 'but', 'so', 'any', 'some', 'every', 'each', 'all', 'hey', 'hi', 'hello', 'yo', 'thanks', 'thank', 'yuo', 'uou', 'uoy', 'uo',
-  'dont', 'get', 'them', 'got', 'me', 'tell', 'about', 'should', 'would', 'could', 'shall', 'will', 'did', 'does', 'do', 'done', 'has', 'have', 'had', 'been', 'being', 'what', 'where', 'who', 'whom', 'whose', 'which', 'why', 'how']);
+const STOP_WORDS = new Set([
+  'a', 'an', 'and', 'are', 'at', 'be', 'can', 'do', 'for', 'how', 'i', 'in',
+  'is', 'it', 'me', 'my', 'of', 'on', 'or', 'please', 'tell', 'the', 'to',
+  'what', 'when', 'where', 'which', 'who', 'with', 'you', 'your',
+]);
 
-function getSimilarity(s1, s2) {
-  if (!s1 || !s2) return 0;
-  let longer = s1.toLowerCase();
-  let shorter = s2.toLowerCase();
-  if (s1.length < s2.length) {
-    longer = s2;
-    shorter = s1;
-  }
-  const shorterLength = shorter.length;
-  if (shorterLength === 0) return 1.0;
+const INTENT_RULES = [
+  { type: 'my_tickets', phrases: ['my tickets', 'ticket history', 'show my tickets', 'purchased tickets'] },
+  { type: 'recommendations', phrases: ['recommend', 'suggest', 'best events', 'for me'] },
+  { type: 'count_events', phrases: ['how many events', 'count events', 'number of events'] },
+  { type: 'event_details', phrases: ['details', 'tell me about', 'when is', 'where is', 'price of'] },
+  { type: 'navigation', phrases: ['where do i', 'how do i find', 'login', 'sign in', 'dashboard', 'profile'] },
+  { type: 'troubleshooting', phrases: ['payment failed', 'issue', 'error', 'not working', 'help'] },
+  { type: 'conversational', phrases: ['hi', 'hello', 'hey', 'thanks', 'thank you'] },
+  { type: 'list_events', phrases: ['events', 'show events', 'list events', 'upcoming', 'discover'] },
+];
 
-  const costs = [];
-  for (let i = 0; i <= longer.length; i++) {
-    let lastValue = i;
-    for (let j = 0; j <= shorter.length; j++) {
-      if (i === 0) costs[j] = j;
-      else {
-        if (j > 0) {
-          let newValue = costs[j - 1];
-          if (longer.charAt(i - 1) !== shorter.charAt(j - 1))
-            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-          costs[j - 1] = lastValue;
-          lastValue = newValue;
-        }
-      }
-    }
-    if (i > 0) costs[shorter.length] = lastValue;
-  }
-  return (longer.length - costs[shorter.length]) / parseFloat(longer.length);
+const GENERIC_EVENT_WORDS = new Set([
+  'about', 'available', 'buy', 'date', 'details', 'event', 'events', 'find',
+  'for', 'info', 'is', 'list', 'location', 'more', 'of', 'on', 'price',
+  'show', 'tell', 'the', 'tickets', 'time', 'upcoming', 'when', 'where',
+]);
+
+let mlCache = null;
+
+async function loadMlService() {
+  if (mlCache) return mlCache;
+  const mlPath = path.resolve(process.cwd(), '..', 'ml', 'recommender.js');
+  const mlUrl = pathToFileURL(mlPath).href;
+  const mod = await import(/* webpackIgnore: true */ mlUrl);
+  mlCache = mod?.default ?? mod;
+  return mlCache;
 }
 
-function cleanTokens(tokens) {
-  return tokens.filter(t => !STOP_WORDS.has(t.toLowerCase()) && t.length > 2);
+function tokenize(text = '') {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
 }
 
-// --- CORE ENGINE ---
+function cleanTokens(text = '') {
+  return tokenize(text).filter((token) => token.length > 2 && !STOP_WORDS.has(token));
+}
 
-// Context Extraction: Remembers the last event the assistant talked about
-function extractContext(history) {
-  if (!history || history.length === 0) return null;
-  for (let i = history.length - 1; i >= 0; i--) {
-    const msg = history[i];
-    if (msg.role === 'assistant' && msg.content) {
-      const eventMatch = msg.content.match(/\*\*([^*]+)\*\*/);
-      if (eventMatch) return { eventName: eventMatch[1].trim() };
-      const listMatch = msg.content.match(/• ([^(\n]+)/);
-      if (listMatch) return { eventName: listMatch[1].trim() };
-    }
+function normalizeText(text = '') {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function getContextEvent(history = []) {
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const content = history[i]?.content || '';
+    const match = content.match(/\*\*([^*]+)\*\*/);
+    if (match) return match[1].trim();
   }
   return null;
 }
 
-// Intent Detection: Smarter weighting and stop-word resistance
-function detectIntent(query) {
-  const lowerQuery = query.toLowerCase();
-  const allTokens = lowerQuery.split(/\s+/).filter(t => t.length > 0);
-  const coreTokens = cleanTokens(allTokens);
-
-  const scores = {
-    count_events: 0,
-    list_events: 0,
-    my_tickets: 0,
-    recommendations: 0,
-    navigation: 0,
-    troubleshooting: 0,
-    platform_info: 0,
-    conversational: 0,
-    event_details: 0
-  };
-
-  const weights = {
-    count_events: { words: ['how many', 'count', 'total', 'number', 'quantity', 'much envents'], weight: 2.5 },
-    list_events: { words: ['show', 'list', 'upcoming', 'browse', 'find', 'discover', 'available', 'concerts', 'events', 'happening'], weight: 2 },
-    my_tickets: { words: ['my tickets', 'my events', 'my orders', 'show my', 'view my', 'i bought', 'purchased', 'ticket history', 'tickets'], weight: 4 },
-    recommendations: { words: ['recommend', 'suggest', 'for me', 'what should i', 'best events', 'popular', 'top events'], weight: 2 },
-    navigation: { words: ['where', 'how do i find', 'how to get', 'access', 'navigate', 'go to', 'page', 'section', 'dashboard', 'wallet', 'profile', 'login', 'signin', 'sign in', 'logout', 'signout', 'sign out'], weight: 2.5 },
-    troubleshooting: { words: ['problem', 'issue', 'error', 'failed', 'not working', 'help', 'broken', 'bug', 'wrong', 'facing'], weight: 2 },
-    platform_info: { words: ['how does', 'what is', 'explain', 'blockchain', 'security', 'work', 'safe', 'secure', 'blocktix', 'refund', 'resale', 'resell', 'purchasing'], weight: 2.5 },
-    conversational: { words: ['hi', 'hello', 'hey', 'thanks', 'thank you', 'ok', 'okay', 'yes', 'no', 'cool', 'great', 'how are', 'uoy', 'uou', 'doing', 'hoa', 'hollo', 'hallo', 'heythere'], weight: 3 },
-    event_details: { words: ['when is', 'where is', 'date of', 'time of', 'details of', 'info about', 'tell me more', 'its date', 'its location', 'its price', 'about', 'details'], weight: 4 }
-  };
-
-  // 1. Exact phrase weighting
-  for (const [intent, config] of Object.entries(weights)) {
-    for (const phrase of config.words) {
-      if (lowerQuery.includes(phrase)) scores[intent] += config.weight * 3;
-    }
-  }
-
-  // 2. Fuzzy token similarity
-  for (const token of allTokens) {
-    for (const [intent, config] of Object.entries(weights)) {
-      let bestTokenScore = 0;
-      for (const phrase of config.words) {
-        const pTokens = phrase.split(' ');
-        for (const pT of pTokens) {
-          if (getSimilarity(token, pT) > 0.85) {
-            const score = config.weight / pTokens.length;
-            if (score > bestTokenScore) bestTokenScore = score;
-          }
-        }
-      }
-      scores[intent] += bestTokenScore;
-    }
-  }
-
-  // 3. Pronoun detection (it/its/that) -> implies event_details context
-  if (lowerQuery.match(/\b(it|its|that|there|where)\b/i) && coreTokens.length <= 2) {
-    scores.event_details += 5;
-  }
-
-  // 4. Misfire Guard: If query is 100% stop words, it MUST be conversational
-  if (coreTokens.length === 0 && allTokens.length > 0) {
-    scores.conversational += 10;
-  }
-
-  // 5. Category Detection
-  let detectedCategory = null;
-  const categories = knowledgeBase.event_categories || [];
-  for (const token of coreTokens) {
-    const matchedCat = categories.find(cat => getSimilarity(token, cat) > 0.8 || cat.toLowerCase().includes(token.toLowerCase()));
-    if (matchedCat) {
-      detectedCategory = matchedCat;
-      scores.list_events += 5; // Implies listing events in this category
-      break;
-    }
-  }
-
-  let bestIntent = 'general';
-  let maxScore = 0;
-  for (const [intent, score] of Object.entries(scores)) {
-    if (score > maxScore) {
-      maxScore = score;
-      bestIntent = intent;
-    }
-  }
-
-  // Auto-search logic for single significant token (e.g., "DevFest")
-  if (maxScore < 2.0 && coreTokens.length === 1 && !detectedCategory && !lowerQuery.includes('login') && !lowerQuery.includes('sign')) {
-    bestIntent = 'event_details';
-  }
-
-  const result = {
-    type: bestIntent,
-    score: maxScore,
-    needsDB: ['count_events', 'list_events', 'my_tickets', 'recommendations', 'event_details'].includes(bestIntent),
-    category: detectedCategory,
-    scope: lowerQuery.match(/past|old|previous|gone|history/i) ? 'past' : 'future',
-    targetEvent: coreTokens.filter(t => !['buy', 'where', 'how to', 'date', 'time', 'location', 'price', 'tell', 'show', 'list', 'event', 'events'].includes(t.toLowerCase())).join(' ')
-  };
-
-  return result;
+function detectCategory(message) {
+  const lower = message.toLowerCase();
+  return (knowledgeBase.event_categories || []).find((category) =>
+    lower.includes(category.toLowerCase())
+  ) || null;
 }
 
-// 4. DATABASE SEARCH ENGINE
-async function executeQuery(intent, userId, context) {
-  const result = { data: null, count: 0, requiresLogin: false };
+function detectIntent(message, history = []) {
+  const normalized = normalizeText(message.toLowerCase());
+  const scores = new Map();
+
+  for (const rule of INTENT_RULES) {
+    const score = rule.phrases.reduce(
+      (total, phrase) => total + (normalized.includes(phrase) ? phrase.split(' ').length : 0),
+      0
+    );
+    if (score) scores.set(rule.type, score);
+  }
+
+  const best = [...scores.entries()].sort((a, b) => b[1] - a[1])[0];
+  const category = detectCategory(message);
+  const tokens = cleanTokens(message);
+  const targetEvent = tokens.filter((token) => !GENERIC_EVENT_WORDS.has(token)).join(' ');
+  const contextEvent = getContextEvent(history);
+
+  let type = best?.[0] || 'general';
+  if (!best && (category || normalized.includes('events'))) type = 'list_events';
+  if (!best && tokens.length <= 2 && contextEvent) type = 'event_details';
+  if (!best && targetEvent) type = 'event_details';
+
+  return {
+    type,
+    category,
+    targetEvent,
+    contextEvent,
+    score: best?.[1] || 0,
+  };
+}
+
+function findFaq(message) {
+  const lower = message.toLowerCase();
+  const tokens = cleanTokens(message);
+
+  let best = null;
+  let bestScore = 0;
+
+  for (const item of knowledgeBase.faq || []) {
+    const question = item.question.toLowerCase();
+    const phraseScore = lower.includes(question) ? 10 : 0;
+    const overlap = tokens.filter((token) => question.includes(token)).length;
+    const score = phraseScore + overlap;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = item;
+    }
+  }
+
+  return bestScore >= 2 ? best : null;
+}
+
+async function resolveUser(firebaseUid) {
+  return firebaseUid ? User.findOne({ firebase_uid: firebaseUid }).lean() : null;
+}
+
+async function queryEvents(intent) {
+  const filters = {
+    deleted: { $ne: true },
+    $or: [{ approvalStatus: 'approved' }, { approvalStatus: { $exists: false } }],
+  };
+
+  if (intent.category) filters.category = intent.category;
+
+  if (intent.type === 'event_details') {
+    const searchTerm = intent.targetEvent || intent.contextEvent;
+    if (!searchTerm) return { items: [], count: 0 };
+
+    const regex = new RegExp(searchTerm.split(/\s+/).join('.*'), 'i');
+    const event = await Event.findOne({ ...filters, event: regex }).lean();
+    return { items: event ? [event] : [], count: event ? 1 : 0 };
+  }
+
+  if (intent.type === 'count_events') {
+    const count = await Event.countDocuments(filters);
+    return { items: [], count };
+  }
+
+  const items = await Event.find(filters).sort({ date: 1 }).limit(5).lean();
+  return { items, count: items.length };
+}
+
+async function queryTickets(firebaseUid) {
+  if (!firebaseUid) return { items: [], count: 0, requiresLogin: true };
+
+  const items = await Ticket.find({ userId: firebaseUid })
+    .populate({
+      path: 'eventId',
+      match: { deleted: { $ne: true } },
+      select: 'event date time location',
+    })
+    .sort({ purchaseDate: -1 })
+    .limit(5)
+    .lean();
+
+  const filtered = items.filter((ticket) => ticket.eventId);
+  return { items: filtered, count: filtered.length, requiresLogin: false };
+}
+
+async function queryRecommendations(firebaseUid) {
+  const events = await Event.find({
+    deleted: { $ne: true },
+    $or: [{ approvalStatus: 'approved' }, { approvalStatus: { $exists: false } }],
+  }).lean();
+
+  if (!firebaseUid) return { items: events.slice(0, 5), count: events.length, categories: [] };
+
+  const user = await resolveUser(firebaseUid);
+  if (!user) return { items: events.slice(0, 5), count: events.length, categories: [] };
+
+  const pref = await ClickPreference.findOne({ userId: user._id }).lean();
+  const clickMap = pref?.categoryClicks ? Object.fromEntries(Object.entries(pref.categoryClicks)) : {};
+  let mlCategoryScores = {};
+  let topCategories = [];
+
   try {
-    const approvedFilter = { $or: [{ approvalStatus: 'approved' }, { approvalStatus: { $exists: false } }] };
-    const filters = { deleted: { $ne: true }, ...approvedFilter }; // Exclude soft-deleted + unapproved events
-    if (intent.scope === 'past') filters.date = { $lt: new Date() };
-    else filters.date = { $gte: new Date() };
+    const ml = await loadMlService();
+    const knownIds = ml.getKnownUserIds?.() || [];
 
-    switch (intent.type) {
-      case 'event_details':
-        const searchName = intent.targetEvent;
-        // Prio 1: Try exact regex match for name
-        if (searchName && searchName.length > 2) {
-          const keywords = searchName.split(/\s+/).filter(k => k.length >= 2);
-          const regexStr = keywords.map(k => `(?=.*${k})`).join('');
-          result.data = await Event.findOne({ 
-            event: { $regex: regexStr, $options: 'i' },
-            deleted: { $ne: true },
-            ...approvedFilter
-          }).lean();
+    if (knownIds.length) {
+      const hash = crypto.createHash('md5').update(String(user._id)).digest('hex');
+      const numericUserId = knownIds[parseInt(hash.slice(0, 8), 16) % knownIds.length];
+      const categories = await ml.getRecommendedCategoriesVerbose?.(numericUserId, 3);
 
-          if (!result.data && keywords.length > 1) {
-            // If and-logic fails, try to find any event that matches the most keywords
-            const allEvents = await Event.find({ deleted: { $ne: true }, ...approvedFilter }).lean();
-            let best = null; let maxScore = 0;
-            for (const e of allEvents) {
-              let score = 0;
-              for (const k of keywords) {
-                if (e.event.toLowerCase().includes(k.toLowerCase())) score++;
-              }
-              if (score > maxScore) { maxScore = score; best = e; }
-            }
-            if (maxScore > 0) result.data = best;
-          }
-
-          if (!result.data) {
-            result.data = await Event.findOne({ 
-              event: { $regex: searchName, $options: 'i' },
-              deleted: { $ne: true },
-              ...approvedFilter
-            }).lean();
-          }
-          if (!result.data) {
-            // Fallback: Fuzzy search against ALL events (excluding deleted)
-            const allEvents = await Event.find({ deleted: { $ne: true }, ...approvedFilter }).lean();
-            let best = null; let maxSim = 0;
-            for (const e of allEvents) {
-              const sim = getSimilarity(searchName, e.event);
-              if (sim > maxSim) { maxSim = sim; best = e; }
-            }
-            if (maxSim > 0.6) result.data = best;
-          }
-        }
-
-        // Prio 2: Context Memory if no specific name found OR if query is very short and matches context
-        if (!result.data && context?.eventName) {
-          result.data = await Event.findOne({ 
-            event: { $regex: context.eventName.split(' ')[0], $options: 'i' },
-            deleted: { $ne: true },
-            ...approvedFilter
-          }).lean();
-        }
-
-        if (result.data) result.count = 1;
-        break;
-
-      case 'my_tickets':
-        if (!userId) result.requiresLogin = true;
-        else {
-          result.data = await Ticket.find({ userId })
-            .populate({
-              path: 'eventId',
-              match: { deleted: { $ne: true } }
-            })
-            .sort({ purchaseDate: -1 })
-            .limit(10)
-            .lean();
-          // Filter out tickets with deleted events
-          result.data = result.data.filter(ticket => ticket.eventId !== null);
-          result.count = result.data.length;
-        }
-        break;
-
-      case 'count_events':
-        result.count = await Event.countDocuments(filters);
-        break;
-
-      case 'list_events':
-      case 'recommendations':
-        if (intent.category) filters.category = intent.category;
-        result.data = await Event.find(filters).sort({ date: 1 }).limit(3).lean();
-        result.count = result.data.length;
-        break;
+      topCategories = (categories || []).map((item) => item.category);
+      mlCategoryScores = topCategories.reduce((acc, category, index) => {
+        acc[category] = topCategories.length - index;
+        return acc;
+      }, {});
     }
-  } catch (e) {
-    console.error('DB Error:', e);
+  } catch (error) {
+    console.error('ML recommendation fallback triggered:', error);
   }
-  return result;
+
+  const scored = [...events].sort((a, b) => {
+    const aScore = (mlCategoryScores[a.category] || 0) + (clickMap[a.category] || 0) * 0.5;
+    const bScore = (mlCategoryScores[b.category] || 0) + (clickMap[b.category] || 0) * 0.5;
+    return bScore - aScore;
+  });
+
+  if (!topCategories.length) {
+    topCategories = Object.entries(clickMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([category]) => category);
+  }
+
+  return { items: scored.slice(0, 5), count: scored.length, categories: topCategories };
 }
 
-// 5. FUZZY FAQ SEARCH
-function findFuzzyMatch(query) {
-  const lowerQuery = query.toLowerCase();
-  const tokens = cleanTokens(lowerQuery.split(/\s+/));
-  if (tokens.length === 0) return null;
+async function buildContext(intent, firebaseUid) {
+  const faq = findFaq(intent.originalMessage || '');
 
-  let bestMatch = null;
-  let highestScore = 0;
-
-  for (const faq of knowledgeBase.faq) {
-    const qTokens = cleanTokens(faq.question.toLowerCase().split(/\s+/));
-    let score = 0;
-    let matchCount = 0;
-    for (const qT of qTokens) {
-      let maxSim = 0;
-      for (const t of tokens) {
-        const sim = getSimilarity(qT, t);
-        if (sim > maxSim) maxSim = sim;
-      }
-      if (maxSim > 0.7) matchCount++;
-      score += maxSim;
-    }
-
-    // Coverage boost: If half of user's core keywords match FAQ keywords exactly/closely
-    const coverage = matchCount / (tokens.length || 1);
-    const finalScore = (score / (qTokens.length || 1)) + (coverage * 0.2);
-
-    if (finalScore > highestScore) {
-      highestScore = finalScore;
-      bestMatch = faq;
-    }
+  if (intent.type === 'my_tickets') {
+    const tickets = await queryTickets(firebaseUid);
+    return { faq, tickets, events: { items: [], count: 0 }, recommendations: null };
   }
-  return highestScore > 0.65 ? bestMatch : null;
+
+  if (intent.type === 'recommendations') {
+    const recommendations = await queryRecommendations(firebaseUid);
+    return { faq, tickets: null, events: { items: [], count: 0 }, recommendations };
+  }
+
+  if (intent.type === 'count_events' || intent.type === 'list_events' || intent.type === 'event_details') {
+    const events = await queryEvents(intent);
+    return { faq, tickets: null, events, recommendations: null };
+  }
+
+  return { faq, tickets: null, events: { items: [], count: 0 }, recommendations: null };
 }
 
-// 6. RESPONSE FORMATTER
-function generateResponse(query, intent, queryResult) {
-  const { type, scope } = intent;
-  const { data, count, requiresLogin } = queryResult;
-  const lowerQuery = query.toLowerCase();
+function formatEvent(event) {
+  return [
+    event.event,
+    `Date: ${new Date(event.date).toLocaleDateString()}`,
+    event.time ? `Time: ${event.time}` : null,
+    event.location ? `Location: ${event.location}` : null,
+    typeof event.price === 'number' ? `Price: Rs ${event.price}` : null,
+    typeof event.remainingTickets === 'number'
+      ? `Availability: ${event.remainingTickets > 0 ? `${event.remainingTickets} left` : 'Sold out'}`
+      : null,
+  ].filter(Boolean).join('\n');
+}
 
-  // FAQ Matching (Priority for specific platform questions)
-  const faqMatch = findFuzzyMatch(query);
-
-  // If intent is high-confidence DB type (like my_tickets), override FAQ to prevent "how to buy" instructions
-  if (intent.score > 10 && (type === 'my_tickets' || type === 'event_details')) {
-    // skip FAQ
-  } else if (faqMatch && (intent.score < 15 || type === 'platform_info' || type === 'navigation' || type === 'troubleshooting')) {
-    return faqMatch.answer;
+function buildFallbackReply(message, intent, context) {
+  if (context.tickets?.requiresLogin) {
+    return 'You need to log in first to view your tickets.';
   }
 
-  if (requiresLogin) return "You need to be logged in to access that. Please sign in at the login page.";
+  if (context.faq && ['navigation', 'troubleshooting', 'general', 'conversational'].includes(intent.type)) {
+    return context.faq.answer;
+  }
 
-  switch (type) {
-    case 'event_details':
-      if (data) {
-        return `Details for **${data.event}**:\\n📅 Date: ${new Date(data.date).toLocaleDateString()}\\n📍 Location: ${data.location}\\n💰 Price: $${data.price || 'Contact organizer'}\\n🎟️ Status: ${data.remainingTickets > 0 ? `${data.remainingTickets} tickets left` : 'Sold out'}`;
-      }
-      return "I couldn't find a specific event with that name. You can explore all upcoming events at the discover page!";
-
-    case 'conversational':
-      if (lowerQuery.match(/how are|uoy|uou|are oka|doing/i)) return "I'm doing great! Ready to help you with events and tickets. What's on your mind?";
-      if (lowerQuery.match(/hi|hello|hey|hillo/i)) return "Hi! I'm your BlockTix assistant. Ask me anything about our platform or events.";
-      return "I'm here to help! What would you like to know?";
-
+  switch (intent.type) {
     case 'my_tickets':
-      if (count > 0) {
-        const list = data.slice(0, 3).map(t => `• ${t.eventId?.event || 'Event'}`).join('\\n');
-        return `You have **${count} tickets**. Your recent ones:\\n${list}\\n\\nView full details at your user dashboard`;
-      }
-      return "You don't have any tickets yet. Explore the discover page to find an event and purchase your first ticket!";
-
+      if (!context.tickets?.count) return 'You do not have any tickets yet. Visit Discover to find an event.';
+      return [
+        `You have ${context.tickets.count} ticket(s).`,
+        ...context.tickets.items.map((ticket) => `• ${ticket.eventId.event} (${new Date(ticket.eventId.date).toLocaleDateString()})`),
+        'Open your dashboard to view the full ticket details.',
+      ].join('\n');
     case 'count_events':
-      if (count === 0) return `I couldn't find any ${scope === 'past' ? 'past ' : ''}events.`;
-      return `We found **${count} ${scope === 'past' ? 'past ' : ''}events**. Find your next experience at the discover page!`;
-
+      return `There are ${context.events.count} approved event(s) available right now.`;
+    case 'event_details':
+      return context.events.items[0]
+        ? formatEvent(context.events.items[0])
+        : "I couldn't find that event. Try the Discover page for the latest list.";
     case 'list_events':
+      return context.events.count
+        ? [
+            intent.category ? `Here are some ${intent.category} events:` : 'Here are some upcoming events:',
+            ...context.events.items.map((event) => `• ${event.event} (${new Date(event.date).toLocaleDateString()})`),
+          ].join('\n')
+        : 'No matching events were found right now.';
     case 'recommendations':
-      if (!data || data.length === 0) return `No ${intent.category ? intent.category + ' ' : ''}events found right now. Check the discover page for live updates.`;
-      const eventList = data.map(e => `• ${e.event} (${new Date(e.date).toLocaleDateString()})`).join('\\n');
-      return `Here's what I found${intent.category ? ' in ' + intent.category : ''}:\\n${eventList}\\n\\nSee more at the discover page`;
-
-    case 'platform_info':
-    case 'troubleshooting':
-    case 'navigation':
-      if (lowerQuery.match(/blockchain|security|safe/i)) return knowledgeBase.platform.features[0] + ". " + knowledgeBase.platform.features[1];
-      if (lowerQuery.match(/resale|resell/i)) {
-        const resaleFaq = knowledgeBase.faq.find(f => f.question.toLowerCase().includes('resell'));
-        return "Resale is handled via secure smart contracts to prevent fraud. " + (resaleFaq?.answer || "");
-      }
-      if (faqMatch) return faqMatch.answer;
-
-      // Dynamic fallbacks when no FAQ matches
-      if (type === 'troubleshooting') {
-        return "I'm sorry you're having trouble. Could you please specify your issue? For example, are you facing problems with **payments**, **tickets**, or **logging in**?";
-      }
-      if (type === 'navigation') {
-        if (lowerQuery.includes('login') || lowerQuery.includes('sign in')) return "You can sign in to your account at the login page.";
-        if (lowerQuery.includes('signup') || lowerQuery.includes('register')) return "Create a new account at the sign up page.";
-        return "Where would you like to go? I can help you find the **discover page**, your **user dashboard**, or the **authentication** section.";
-      }
-
-      return "I can help you with event discovery, ticket management, and more on BlockTix. What specifically would you like to know about our platform?";
+      return context.recommendations?.items?.length
+        ? [
+            context.recommendations.categories?.length
+              ? `Recommended based on your interests in ${context.recommendations.categories.join(', ')}:`
+              : 'Here are some recommended events:',
+            ...context.recommendations.items.map((event) => `• ${event.event} (${event.category})`),
+          ].join('\n')
+        : 'I do not have enough preference data yet, but you can explore events on the Discover page.';
+    case 'conversational':
+      return "I'm here to help with events, tickets, recommendations, resale, and account questions.";
+    default:
+      return context.faq?.answer || 'Ask me about events, tickets, recommendations, resale, or login help.';
   }
-
-  return "I'm not sure I understand. Try asking about 'upcoming events', 'my tickets', or 'how does resale work?'.";
 }
 
-// --- MAIN API ENDPOINT ---
+function buildPrompt(message, intent, context, fallbackReply) {
+  const eventLines = context.events.items.map((event) => `- ${formatEvent(event)}`).join('\n');
+  const ticketLines = (context.tickets?.items || [])
+    .map((ticket) => `- ${ticket.eventId.event} on ${new Date(ticket.eventId.date).toLocaleDateString()} at ${ticket.eventId.location}`)
+    .join('\n');
+  const recommendationLines = (context.recommendations?.items || [])
+    .map((event) => `- ${event.event} (${event.category}) on ${new Date(event.date).toLocaleDateString()}`)
+    .join('\n');
+
+  return [
+    'You are the BlockTix support assistant.',
+    'Answer clearly and briefly using only the supplied context.',
+    'Use plain text with short paragraphs or bullet points when helpful.',
+    `User message: ${message}`,
+    `Detected intent: ${intent.type}`,
+    context.faq ? `FAQ match: ${context.faq.question} -> ${context.faq.answer}` : 'FAQ match: none',
+    eventLines ? `Relevant events:\n${eventLines}` : 'Relevant events: none',
+    ticketLines ? `User tickets:\n${ticketLines}` : 'User tickets: none',
+    recommendationLines ? `Recommendations:\n${recommendationLines}` : 'Recommendations: none',
+    `Fallback answer: ${fallbackReply}`,
+  ].join('\n\n');
+}
+
+async function generateWithGroq(prompt) {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) return null;
+
+  const response = await fetch(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are the BlockTix support assistant. Respond clearly, briefly, and professionally.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.4,
+        max_tokens: 300,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('Groq full error:', errorBody);
+
+    throw new Error(
+      `Groq API failed with ${response.status}: ${errorBody}`
+    );
+  }
+
+  const data = await response.json();
+
+  return (
+    data?.choices?.[0]?.message?.content?.trim() || null
+  );
+}
+
 export async function POST(req) {
   try {
-    const { message, userId, conversationHistory } = await req.json();
-    if (!message?.trim()) return NextResponse.json({ success: false, message: 'Message required' }, { status: 400 });
+    const { message, userId, conversationHistory = [] } = await req.json();
+    const trimmedMessage = normalizeText(message);
+
+    if (!trimmedMessage) {
+      return NextResponse.json({ success: false, error: 'Message is required' }, { status: 400 });
+    }
 
     await dbConnect();
-    const intent = detectIntent(message);
-    const context = extractContext(conversationHistory);
 
-    let queryResult = { data: null, count: 0, requiresLogin: false };
-    if (intent.needsDB) queryResult = await executeQuery(intent, userId, context);
+    const intent = detectIntent(trimmedMessage, conversationHistory);
+    intent.originalMessage = trimmedMessage;
 
-    const response = generateResponse(message, intent, queryResult);
+    const context = await buildContext(intent, userId || null);
+    const fallbackReply = buildFallbackReply(trimmedMessage, intent, context);
+
+    let reply = fallbackReply;
+    let provider = 'fallback';
+
+    try {
+      const llmReply = await generateWithGroq(buildPrompt(trimmedMessage, intent, context, fallbackReply));
+      if (llmReply) {
+        reply = llmReply;
+        provider = 'groq';
+      }
+    } catch (error) {
+      console.error('Groq generation failed:', error);
+    }
 
     return NextResponse.json({
       success: true,
-      message: response,
+      message: reply,
       metadata: {
         intent: intent.type,
-        score: intent.score.toFixed(2),
-        eventsFound: queryResult.count,
-        userTicketsCount: intent.type === 'my_tickets' ? queryResult.count : 0
-      }
+        provider,
+        eventsFound: context.events.count || context.recommendations?.items?.length || 0,
+        userTicketsCount: context.tickets?.count || 0,
+      },
     });
-
-  } catch (err) {
-    console.error('API Error:', err);
-    return NextResponse.json({ success: false, message: "Service unavailable." }, { status: 500 });
+  } catch (error) {
+    console.error('Chatbot API Error:', error);
+    return NextResponse.json({ success: false, error: 'Service unavailable.' }, { status: 500 });
   }
 }
