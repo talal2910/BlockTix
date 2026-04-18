@@ -1,6 +1,6 @@
-import crypto from "crypto";
 import path from "path";
 import { pathToFileURL } from "url";
+import crypto from "crypto";
 import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
 import User from "@/models/User";
@@ -16,7 +16,6 @@ const TRENDING_DAYS  = 7;
 
 // ML service loader
 let mlCache = null;
-let mlLoadErrorLogged = false;
 
 async function loadMlService() {
     if (mlCache) return mlCache;
@@ -25,6 +24,14 @@ async function loadMlService() {
     const mod = await import(/* webpackIgnore: true */ mlUrl);
     mlCache = mod?.default ?? mod;
     return mlCache;
+}
+
+function getFallbackMlUserId(firebaseUid, knownIds = []) {
+    if (!firebaseUid || !knownIds.length) return null;
+
+    const hash = crypto.createHash("md5").update(String(firebaseUid)).digest("hex");
+    const index = parseInt(hash.slice(0, 8), 16) % knownIds.length;
+    return knownIds[index];
 }
 
 // Trending Detection — counts ticket sales per category in last 7 days
@@ -105,31 +112,14 @@ export async function GET(req) {
                     clickScores = Object.fromEntries(Object.entries(clickPref.categoryClicks));
                 }
 
-                // Map MongoDB user → numeric ML user ID
-                if (!numericUserId) {
-                    try {
-                        const ml = await loadMlService();
-                        const { getKnownUserIds } = ml;
-                        if (getKnownUserIds) {
-                            const knownIds = getKnownUserIds();
-                            if (knownIds.length > 0) {
-                                const hash = crypto.createHash("md5").update(String(user._id)).digest("hex");
-                                const idx  = parseInt(hash.slice(0, 8), 16) % knownIds.length;
-                                numericUserId = knownIds[idx];
-                            }
-                        }
-                    } catch (e) {
-                        if (!mlLoadErrorLogged) {
-                            console.error("Failed to map user to ML user id:", e);
-                            mlLoadErrorLogged = true;
-                        }
-                    }
-                }
+                // Only use the offline ML model when a real numeric user id is provided.
+                // Hashing BlockTix users into unrelated MovieLens ids makes recommendations
+                // look personalized while actually ignoring the user's saved interests.
             }
         }
 
-        // No user logged in — return events boosted only by trending
-        if (!numericUserId) {
+        // No user context at all — return events boosted only by trending
+        if (!firebase_uid || !user) {
             const scoredEvents = events
                 .map(event => ({
                     ...event,
@@ -144,20 +134,41 @@ export async function GET(req) {
             );
         }
 
-        // ML inference
+        // ML inference is optional. If the user is not part of the offline model yet,
+        // we still rank events using live signals such as saved preferences, clicks,
+        // and location instead of falling back to generic trending results.
+        let categoryOrder = [];
+        let verbose = null;
+        let mlMethod = "live_signals_only";
+
         try {
             const ml = await loadMlService();
-            const { getRecommendedCategories, getRecommendedCategoriesVerbose } = ml;
+            const knownIds = ml.getKnownUserIds?.() || [];
+            const resolvedNumericUserId = numericUserId
+                ? Number(numericUserId)
+                : getFallbackMlUserId(firebase_uid, knownIds);
 
-            if (!getRecommendedCategories) throw new Error("Recommender not found");
+            if (resolvedNumericUserId) {
+                numericUserId = resolvedNumericUserId;
+                const ml = await loadMlService();
+                const { getRecommendedCategories, getRecommendedCategoriesVerbose } = ml;
 
-            const verbose = getRecommendedCategoriesVerbose
-                ? await getRecommendedCategoriesVerbose(numericUserId, top)
-                : null;
+                if (!getRecommendedCategories) throw new Error("Recommender not found");
 
-            const categoryOrder = verbose
-                ? verbose.map(c => c.category)
-                : await getRecommendedCategories(numericUserId, top);
+                verbose = getRecommendedCategoriesVerbose
+                    ? await getRecommendedCategoriesVerbose(resolvedNumericUserId, top, clickScores)
+                    : null;
+
+                categoryOrder = verbose
+                    ? verbose.map(c => c.category)
+                    : await getRecommendedCategories(resolvedNumericUserId, top, clickScores);
+
+                mlMethod = searchParams.get("userId")
+                    ? (verbose?.[0]?.method || "matrix_factorization_sgd")
+                    : "hashed_known_user_fallback";
+            }
+
+            const maxClickScore = Math.max(1, ...Object.values(clickScores), 0);
 
             // MF base score
             const baseScore   = categoryOrder.length;
@@ -175,7 +186,7 @@ export async function GET(req) {
                     const mlScore = cat ? (mlCatScores[cat] || 0) : 0;
 
                     // 2. Real-time click signal
-                    const clickScore = cat ? (clickScores[cat] || 0) : 0;
+                    const clickScore = cat ? ((clickScores[cat] || 0) / maxClickScore) : 0;
 
                     // 3. UC-05: user-selected preferred categories
                     const prefScore = (cat && preferredCategories.includes(cat)) ? 1 : 0;
@@ -209,11 +220,11 @@ export async function GET(req) {
                 JSON.stringify({
                     success              : true,
                     events               : scoredEvents,
-                    userId               : Number(numericUserId),
+                    userId               : numericUserId ? Number(numericUserId) : null,
                     recommendedCategories: verbose ?? categoryOrder,
                     trendingCategories,
                     signals: {
-                        mlMethod    : verbose?.[0]?.method || "matrix_factorization_sgd",
+                        mlMethod,
                         preferences : preferredCategories,
                         userCity,
                     },

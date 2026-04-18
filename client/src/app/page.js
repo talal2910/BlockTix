@@ -183,7 +183,7 @@ export default function Home() {
           <div className="flex flex-row justify-between items-end mb-6">
             <div>
               <h2 className="text-4xl font-bold m-0 text-white flex items-center gap-3">
-                🔥 Trending Now
+                Trending Now
               </h2>
               <p className="text-white/70 ml-1 mt-2 text-lg">
                 Most popular events this week
