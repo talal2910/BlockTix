@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '../components/Skeleton';
-import useEventStore from '@/store/useEventStore';
 
 // ICONS
 const UserIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>);
@@ -23,7 +22,6 @@ const CAT_ICONS = { Music: '🎵', Sports: '⚽', Art: '🎨', 'Food And Drink':
 function UserProfile() {
   const router = useRouter();
   const { user: authUser, logout, updatePasswordFunc, updateEmailFunc, reauthenticate, deleteAccount } = useAuth();
-  const refreshEvents = useEventStore((state) => state.refreshEvents);
 
   const [activeTab, setActiveTab] = useState('profile');
   const [userData, setUserData] = useState(null);
@@ -120,7 +118,6 @@ function UserProfile() {
       });
       const data = await res.json();
       if (data.success) {
-        await refreshEvents(authUser.uid);
         setPrefMsg({ type: 'success', text: 'Preferences saved! Your recommendations will update.' });
       } else {
         setPrefMsg({ type: 'error', text: data.message || 'Failed to save.' });
