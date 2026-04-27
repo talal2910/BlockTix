@@ -121,6 +121,9 @@ export default function Home() {
   );
 
   return (
+   
+    <div className="min-h-screen bg-white/10 backdrop-blur-sm">
+      {/* --- HERO SECTION --- */}
       <div className="flex flex-col items-center justify-center min-h-screen shadow-xl relative overflow-hidden">
         <h1 className="text-4xl sm:text-6xl font-bold m-0 w-full sm:w-3/4 px-4 text-center z-10">
           Discover and attend events with{' '}
