@@ -667,7 +667,7 @@ function OrganizerDashboard() {
                     <div className="p-6 bg-white/5 rounded-2xl border border-white/10 shadow-sm space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className=" px-2">
-                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Price ($)</label>
+                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Price (Rs)</label>
                           <input required type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
                             value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                         </div>
@@ -695,7 +695,7 @@ function OrganizerDashboard() {
                       {formData.ebEnabled && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in pt-2">
                           <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Discount Price ($)</label>
+                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Discount Price (Rs)</label>
                             <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
                               value={formData.ebPrice} onChange={e => setFormData({ ...formData, ebPrice: e.target.value })} />
                           </div>

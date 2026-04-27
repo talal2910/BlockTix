@@ -63,16 +63,12 @@ export default function SignupPage() {
   try {
     const { role: userRole, verificationSent } = await signup(email, password, name, role);
 
-    if (verificationSent) {
-      setSuccessMessage(
-        'Account created. We have sent a verification link to your email. Please verify, then log in.'
-      );
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
-    } else {
-      router.push(`/dashboard/${userRole}`);
-    }
+    setSuccessMessage(
+      'Account created! We have sent a verification link to your email. Please verify than log in.'
+    );
+    setTimeout(() => {
+      router.push('/login');
+    }, 3000);
   } catch (err) {
   console.error(err);
 

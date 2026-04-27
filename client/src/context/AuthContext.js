@@ -44,7 +44,6 @@ const signup = async (email, password, name, role) => {
     throw new Error("Failed to save user to database");
   }
 
-  // Send verification email and log user out
   await sendEmailVerification(user);
   await signOut(auth);
   setCurrentUser(null);
@@ -94,7 +93,7 @@ const login = async (email, password) => {
     console.error('Mongo email sync (login) error:', e);
   }
 
-  return { role: user.role };
+  return { role: user.role, uid: firebaseUID };
 };
 
 const resetPassword = (email) => {

@@ -1,53 +1,99 @@
-const fs   = require('fs');
-const path = require('path');
+/*
+ Run: node ml/train.js
+After enough real data has been collected, re-run this script so the model
+learns from actual platform behaviour. The server picks up the new model
+automatically via recommender.js's hot-reload.
+ */
 
+import fs   from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 const DATA_DIR   = __dirname;
 const MODEL_PATH = path.join(DATA_DIR, 'model_weights.json');
 
-// Hyperparameters
-const N_FACTORS  = 20;    // number of latent factors (user/event embedding size)
-const N_EPOCHS   = 30;    // number of full passes through training data
-const LR         = 0.005; // learning rate
-const REG        = 0.02;  // L2 regularisation lambda
-const INTERACTION_WEIGHTS = { purchase: 3.0, view: 1.0, wishlist: 1.5 };
+// Hyperparameters 
+const N_FACTORS = 20;     // number of latent factors
+const N_EPOCHS  = 30;     // full passes over training data
+const LR        = 0.005;  // SGD learning rate
+const REG       = 0.02;   // L2 regularisation lambda
 
-// CSV parser
+// How much each interaction type is worth as a signal.
+// purchase > wishlist > view  (a paid user is the strongest signal)
+const INTERACTION_WEIGHTS = { purchase: 3.0, wishlist: 1.5, view: 1.0 };
+
+// RFC-4180 compliant CSV parser
+// The default naive split(",") breaks on fav_categories which looks like:
+//   "[""Music"", ""Sports""]"
+function splitCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i + 1] === '"') { cur += '"'; i++; }  // escaped quote
+      else inQ = !inQ;
+    } else if (ch === ',' && !inQ) {
+      result.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
 function parseCSV(filePath) {
   const lines   = fs.readFileSync(filePath, 'utf8').split(/\r?\n/).filter(l => l.trim());
-  const headers = lines[0].split(',').map(h => h.trim());
+  const headers = splitCSVLine(lines[0]);
   return lines.slice(1).map(line => {
-    const cols = line.split(',');
+    const cols = splitCSVLine(line);
     const obj  = {};
-    headers.forEach((h, i) => obj[h] = cols[i]?.trim());
+    headers.forEach((h, i) => { obj[h] = (cols[i] ?? '').trim(); });
     return obj;
   });
 }
 
-// Load data
+// Load all three CSVs
 console.log('\nBlockTix Matrix Factorization Trainer');
-console.log('======================================');
-console.log('Loading data...');
+console.log('Loading data...\n');
 
+const usersRaw  = parseCSV(path.join(DATA_DIR, 'users.csv'));
 const eventsRaw = parseCSV(path.join(DATA_DIR, 'events.csv'));
 const interRaw  = parseCSV(path.join(DATA_DIR, 'interactions.csv'));
 
+// Build lookup maps from users and events CSVs
+// These are stored in the model so recommender.js can do location scoring
+// at inference time without re-reading the CSV files.
+const userCityMap = {};   // { user_id  -> city }
+const eventCat    = {};   // { event_id -> category }
+const eventCity   = {};   // { event_id -> city }
+
+usersRaw.forEach(u  => { if (u.city)     userCityMap[u.user_id]  = u.city; });
+eventsRaw.forEach(e => { if (e.category) eventCat[e.event_id]    = e.category; });
+eventsRaw.forEach(e => { if (e.city)     eventCity[e.event_id]   = e.city; });
+
+// Count how many rows are synthetic (id <= 2000 for users, <= 105 for events)
+const realUsers  = usersRaw.filter(u => parseInt(u.user_id)  > 2000).length;
+const realEvents = eventsRaw.filter(e => parseInt(e.event_id) > 105).length;
+
 // Index mappings
+// Only users and events that appear in interactions.csv get matrix rows.
 const userIds  = [...new Set(interRaw.map(r => r.user_id))].sort();
 const eventIds = [...new Set(interRaw.map(r => r.event_id))].sort();
-const userIdx  = Object.fromEntries(userIds.map((u, i)  => [u, i]));
+const userIdx  = Object.fromEntries(userIds.map((u, i) => [u, i]));
 const eventIdx = Object.fromEntries(eventIds.map((e, i) => [e, i]));
 const nUsers   = userIds.length;
 const nEvents  = eventIds.length;
 
-// Event category lookup
-const eventCat = {};
-eventsRaw.forEach(e => eventCat[e.event_id] = e.category);
-
-// Apply interaction weights, deduplicate (keep max weighted rating per user-event)
+// Build training samples
+// Apply interaction-type weights, keep max-weighted rating per (user, event).
 const ratingMap = {};
 interRaw.forEach(r => {
   const key     = `${r.user_id}_${r.event_id}`;
-  const w       = INTERACTION_WEIGHTS[r.interaction_type] || 1.0;
+  const w       = INTERACTION_WEIGHTS[r.interaction_type] ?? 1.0;
   const wRating = parseFloat(r.rating) * w;
   if (!ratingMap[key] || wRating > ratingMap[key].rating) {
     ratingMap[key] = { userId: r.user_id, eventId: r.event_id, rating: wRating };
@@ -55,24 +101,29 @@ interRaw.forEach(r => {
 });
 const ratings = Object.values(ratingMap);
 
-console.log(`  Users           : ${nUsers}`);
-console.log(`  Events          : ${nEvents}`);
-console.log(`  Training samples: ${ratings.length}`);
-console.log(`  Latent factors  : ${N_FACTORS}`);
-console.log(`  Epochs          : ${N_EPOCHS}`);
+console.log(`  Synthetic users  : ${usersRaw.length  - realUsers}`);
+console.log(`  Real users       : ${realUsers}`);
+console.log(`  Synthetic events : ${eventsRaw.length - realEvents}`);
+console.log(`  Real events      : ${realEvents}`);
+console.log(`  Total users in model  : ${nUsers}`);
+console.log(`  Total events in model : ${nEvents}`);
+console.log(`  Training samples      : ${ratings.length}`);
+console.log(`  Latent factors        : ${N_FACTORS}`);
+console.log(`  Epochs                : ${N_EPOCHS}\n`);
 
-// Initialise factor matrices with small random values
+// Initialise factor matrices
 function randFactor() {
   return Array.from({ length: N_FACTORS }, () => (Math.random() - 0.5) * 0.1);
 }
-const P = Array.from({ length: nUsers },  randFactor); // user embeddings
-const Q = Array.from({ length: nEvents }, randFactor); // event embeddings
+const P = Array.from({ length: nUsers  }, randFactor);  // user embeddings  [nUsers  × K]
+const Q = Array.from({ length: nEvents }, randFactor);  // event embeddings [nEvents × K]
 
 function dot(a, b) {
   let s = 0;
   for (let k = 0; k < N_FACTORS; k++) s += a[k] * b[k];
   return s;
 }
+
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -80,9 +131,9 @@ function shuffle(arr) {
   }
 }
 
-// SGD Training loop
-console.log('\nTraining...\n');
-let trainLoss = 0;
+// SGD training loop
+console.log('Training...\n');
+let finalRMSE = 0;
 
 for (let epoch = 1; epoch <= N_EPOCHS; epoch++) {
   shuffle(ratings);
@@ -104,14 +155,14 @@ for (let epoch = 1; epoch <= N_EPOCHS; epoch++) {
     }
   }
 
-  trainLoss = Math.sqrt(totalLoss / ratings.length);
+  finalRMSE = Math.sqrt(totalLoss / ratings.length);
   if (epoch % 5 === 0 || epoch === 1) {
-    console.log(`  Epoch ${String(epoch).padStart(2)}/${N_EPOCHS}   RMSE: ${trainLoss.toFixed(4)}`);
+    process.stdout.write(`  Epoch ${String(epoch).padStart(2)}/${N_EPOCHS}   RMSE: ${finalRMSE.toFixed(4)}\n`);
   }
 }
 
-// Evaluate Precision and Recall
-console.log('\nEvaluating...');
+// Evaluation: Precision and Recall
+console.log('\nEvaluating Precision / Recall...');
 
 const userRatings = {};
 ratings.forEach(r => {
@@ -135,17 +186,18 @@ for (const uid of sampleUsers) {
   if (!trueCats.size) continue;
 
   const ui = userIdx[uid];
-  const catScore = {}, catCount = {};
+  const catS = {}, catC = {};
   eventIds.forEach(eid => {
-    const ei = eventIdx[eid], cat = eventCat[eid];
-    if (!cat) return;
-    const s = dot(P[ui], Q[ei]);
-    catScore[cat] = (catScore[cat] || 0) + s;
-    catCount[cat] = (catCount[cat] || 0) + 1;
+    const ei  = eventIdx[eid];
+    const cat = eventCat[eid];
+    if (!cat || ei === undefined) return;
+    const s  = dot(P[ui], Q[ei]);
+    catS[cat] = (catS[cat] || 0) + s;
+    catC[cat] = (catC[cat] || 0) + 1;
   });
 
-  const top3 = Object.entries(catScore)
-    .map(([c, s]) => [c, s / catCount[c]])
+  const top3 = Object.entries(catS)
+    .map(([c, s]) => [c, s / catC[c]])
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([c]) => c);
@@ -156,10 +208,10 @@ for (const uid of sampleUsers) {
   nEval++;
 }
 
-const p3 = totalP / nEval;
-const r3 = totalR / nEval;
+const p3 = nEval > 0 ? totalP / nEval : 0;
+const r3 = nEval > 0 ? totalR / nEval : 0;
 
-// Save model weights
+// Save model
 const modelData = {
   meta: {
     algorithm      : 'Matrix Factorization (SGD)',
@@ -169,32 +221,42 @@ const modelData = {
     regularisation : REG,
     nUsers,
     nEvents,
+    realUsers,
+    realEvents,
+    syntheticUsers : nUsers - realUsers,
     trainingSamples: ratings.length,
-    finalRMSE      : parseFloat(trainLoss.toFixed(4)),
+    finalRMSE      : parseFloat(finalRMSE.toFixed(4)),
     precisionAt3   : parseFloat(p3.toFixed(4)),
     recallAt3      : parseFloat(r3.toFixed(4)),
     trainedAt      : new Date().toISOString(),
   },
-  userIds,
-  eventIds,
-  userIdx,
-  eventIdx,
-  P,
-  Q,
-  eventCat,
+  userIds,    // string[] — all user IDs that appear in interactions
+  eventIds,   // string[] — all event IDs that appear in interactions
+  userIdx,    // { user_id_string: matrix_row_index }
+  eventIdx,   // { event_id_string: matrix_col_index }
+  P,          // user embedding matrix  [nUsers × K]
+  Q,          // event embedding matrix [nEvents × K]
+  eventCat,   // { event_id -> category }  — used by recommender for category scoring
+  eventCity,  // { event_id -> city }       — used by recommender for location scoring
+  userCity: userCityMap, // { user_id -> city }  — reference only
 };
 
 fs.writeFileSync(MODEL_PATH, JSON.stringify(modelData));
 const sizeKB = (fs.statSync(MODEL_PATH).size / 1024).toFixed(1);
 
-console.log(`\n${'='.repeat(52)}`);
+console.log(`\n${'='.repeat(54)}`);
 console.log('  MODEL TRAINED SUCCESSFULLY');
-console.log(`${'='.repeat(52)}`);
-console.log(`  Algorithm      : Matrix Factorization (SGD)`);
-console.log(`  Latent Factors : ${N_FACTORS}`);
-console.log(`  Epochs         : ${N_EPOCHS}`);
-console.log(`  Final RMSE     : ${trainLoss.toFixed(4)}`);
-console.log(`  Precision@3    : ${(p3 * 100).toFixed(1)}%`);
-console.log(`  Recall@3       : ${(r3 * 100).toFixed(1)}%`);
-console.log(`  Saved to       : ml/model_weights.json  (${sizeKB} KB)`);
-console.log(`${'='.repeat(52)}\n`);
+console.log(`${'='.repeat(54)}`);
+console.log(`  Algorithm        : Matrix Factorization (SGD)`);
+console.log(`  Latent Factors   : ${N_FACTORS}`);
+console.log(`  Epochs           : ${N_EPOCHS}`);
+console.log(`  Real users       : ${realUsers}`);
+console.log(`  Synthetic users  : ${usersRaw.length - realUsers}`);
+console.log(`  Real events      : ${realEvents}`);
+console.log(`  Synthetic events : ${eventsRaw.length - realEvents}`);
+console.log(`  Final RMSE       : ${finalRMSE.toFixed(4)}`);
+console.log(`  Precision        : ${(p3 * 100).toFixed(1)}%`);
+console.log(`  Recall           : ${(r3 * 100).toFixed(1)}%`);
+console.log(`  Saved to         : ml/model_weights.json  (${sizeKB} KB)`);
+console.log(`${'='.repeat(54)}\n`);
+console.log('The server will pick up this model automatically (no restart needed).');

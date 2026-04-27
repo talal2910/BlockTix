@@ -34,11 +34,23 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { role } = await login(email, password);
+      const { role, uid } = await login(email, password);
       setIsSuccess(true);
-      
-      // Short delay so the user actually sees the success state before redirecting
-      setTimeout(() => {
+
+      // For attendees only: check if they have set preferences yet, If not, send them to /welcome first
+      setTimeout(async () => {
+        if (role === 'user') {
+          try {
+            const res  = await fetch(`/api/preferences/categories?firebase_uid=${uid}`);
+            const data = await res.json();
+            if (data.success && (!data.preferredCategories || data.preferredCategories.length === 0)) {
+              router.push('/welcome');
+              return;
+            }
+          } catch (_) {
+            // If check fails, just proceed normally
+          }
+        }
         router.push(`/dashboard/${role}`);
       }, 1500);
       

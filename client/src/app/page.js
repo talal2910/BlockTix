@@ -4,21 +4,34 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import ChatbotRag from './components/Ragchatbot';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
 export default function Home() {
   const [events, setEvents] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [trendingEvents, setTrendingEvents] = useState([]);       
-  const [trendingCategories, setTrendingCategories] = useState([]); 
+  const [trendingEvents, setTrendingEvents] = useState([]);
+  const [trendingCategories, setTrendingCategories] = useState([]);
   const [filteredSearchResults, setFilteredSearchResults] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
 
   const router = useRouter();
   const { user } = useAuth();
 
   useEffect(() => { setShow(true); }, []);
+
+  // Fetch wishlist
+  useEffect(() => {
+    if (!user?.uid) return;
+    fetch(`/api/wishlist?firebase_uid=${user.uid}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setWishlist(data.savedEvents.map(e => e.eventId));
+      })
+      .catch(() => {});
+  }, [user?.uid]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -77,6 +90,26 @@ export default function Home() {
     router.push('/dashboard/organizer');
   };
 
+  async function handleToggleWishlist(e, eventId) {
+    e.stopPropagation();
+    if (!user) { toast.error('Login to save events'); return; }
+    try {
+      const res = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firebase_uid: user.uid, event_id: eventId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.message || 'Something went wrong'); return; }
+      setWishlist(prev =>
+        data.saved ? [...prev, eventId] : prev.filter(id => id !== eventId)
+      );
+      toast.success(data.saved ? 'Saved to wishlist' : 'Removed from wishlist');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
+
   // Reusable event banner card
   const EventBanner = ({ event }) => (
     <div
@@ -84,6 +117,21 @@ export default function Home() {
       onClick={() => router.push(`/event/${event.eventId}`)}
       className="group relative flex flex-col md:flex-row h-auto md:h-56 w-full bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 cursor-pointer"
     >
+      {/* ❤️ Heart — top right corner of the whole card */}
+      {user && (
+        <button
+          onClick={(e) => handleToggleWishlist(e, event.eventId)}
+          className="absolute top-3 right-3 z-30 rounded-full bg-black/40 w-8 h-8 flex items-center justify-center backdrop-blur-md hover:bg-black/60 transition"
+          title={wishlist.includes(event.eventId) ? 'Remove from wishlist' : 'Save to wishlist'}
+        >
+          {wishlist.includes(event.eventId)
+            ? <FaHeart className="text-red-400 text-xs" />
+            : <FaRegHeart className="text-white text-xs" />
+          }
+        </button>
+      )}
+
+      {/* Image */}
       <div className="w-full md:w-2/5 h-48 md:h-full relative overflow-hidden">
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
         {event.image ? (
@@ -98,17 +146,21 @@ export default function Home() {
           <span className="block text-xl font-bold text-[#FFA500]">{new Date(event.date).getDate()}</span>
         </div>
       </div>
+
+      {/* Info */}
       <div className="w-full md:w-3/5 p-6 flex flex-col justify-between">
         <div>
           <h3 className="text-2xl font-bold text-white truncate mb-2 group-hover:text-[#FFA500] transition-colors">{event.event}</h3>
           <div className="flex items-center text-white/70 mb-2">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
             <p className="text-sm truncate">{event.location}</p>
           </div>
-          {/* Trending badge */}
           {event.isTrending && (
             <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30 mb-1">
-            Trending
+              Trending
             </span>
           )}
         </div>
@@ -148,11 +200,18 @@ export default function Home() {
               <div className="absolute w-full mt-3 rounded-2xl max-h-72 overflow-y-auto bg-gray-900/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-white/10 p-2 z-50 animate-in fade-in zoom-in-95 duration-200 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/30 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-500/50">
                 {filteredSearchResults.length > 0 ? (
                   filteredSearchResults.map(event => (
-                    <div key={event._id} className="group flex justify-between items-center px-4 py-3 mb-1 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer border border-transparent hover:border-white/10" onClick={() => router.push(`/event/${event.eventId}`)}>
+                    <div
+                      key={event._id}
+                      className="group flex justify-between items-center px-4 py-3 mb-1 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer border border-transparent hover:border-white/10"
+                      onClick={() => router.push(`/event/${event.eventId}`)}
+                    >
                       <div className="flex flex-col">
                         <span className="font-semibold text-white group-hover:text-[#FFA500] transition-colors">{event.event}</span>
                         <div className="flex items-center text-xs text-white/60 mt-0.5">
-                          <svg className="w-3 h-3 mr-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                          <svg className="w-3 h-3 mr-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          </svg>
                           <span className="truncate max-w-[150px]">{event.location}</span>
                         </div>
                       </div>
@@ -179,13 +238,12 @@ export default function Home() {
         </div>
       </div>
 
+      {/* TRENDING EVENTS */}
       {trendingEvents.length > 0 && (
         <div className="flex flex-col min-h-auto p-8 shadow-xl m-0">
           <div className="flex flex-row justify-between items-end mb-6">
             <div>
-              <h2 className="text-4xl font-bold m-0 text-white flex items-center gap-3">
-                🔥 Trending Now
-              </h2>
+              <h2 className="text-4xl font-bold m-0 text-white flex items-center gap-3">Trending Now</h2>
               <p className="text-white/70 ml-1 mt-2 text-lg">
                 Most popular events this week
                 {trendingCategories.length > 0 && (
