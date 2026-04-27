@@ -5,16 +5,14 @@ const useEventStore = create((set, get) => ({
   hasFetched: false,
   loading: false,
 
-  // Used by homepage — fetches once per session (cached)
   fetchEvents: async (userUid) => {
+    // Only fetch if we haven't already or if user context changed
     if (get().hasFetched) return;
 
     set({ loading: true });
     try {
       const query = userUid ? `?firebase_uid=${userUid}` : '';
-      const res = await fetch(`/api/recommendations${query}`, {
-        cache: 'no-store',
-      });
+      const res = await fetch(`/api/recommendations${query}`);
       const data = await res.json();
 
       if (data.success) {
@@ -22,26 +20,6 @@ const useEventStore = create((set, get) => ({
       }
     } catch (error) {
       console.error('Failed to fetch events:', error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  // Used by Discover page — always fetches fresh ranked results
-  refreshEvents: async (userUid) => {
-    set({ loading: true, hasFetched: false });
-    try {
-      const query = userUid ? `?firebase_uid=${userUid}` : '';
-      const res = await fetch(`/api/recommendations${query}`, {
-        cache: 'no-store',
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        set({ events: data.events, hasFetched: true });
-      }
-    } catch (error) {
-      console.error('Failed to refresh events:', error);
     } finally {
       set({ loading: false });
     }
