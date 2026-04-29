@@ -65,29 +65,38 @@ export async function POST(req) {
       );
     }
 
-    // Find or create the user's wishlist document
-    let wishlist = await Wishlist.findOne({ userId: firebase_uid });
-    if (!wishlist) {
-      wishlist = new Wishlist({ userId: firebase_uid, savedEvents: [] });
-    }
-
-    // Check if the event is already saved
-    const alreadySaved = wishlist.savedEvents.some(
-      id => id.toString() === event._id.toString()
+    // Atomic toggle to avoid races that can trigger E11000 on userId
+    const pullRes = await Wishlist.updateOne(
+      { userId: firebase_uid },
+      { $pull: { savedEvents: event._id } }
     );
 
-    if (alreadySaved) {
-      // Remove from wishlist
-      wishlist.savedEvents = wishlist.savedEvents.filter(
-        id => id.toString() !== event._id.toString()
-      );
-      await wishlist.save();
+    const removedCount = (pullRes.modifiedCount ?? pullRes.nModified ?? 0);
+    if (removedCount > 0) {
       return NextResponse.json({ success: true, saved: false });
     }
 
-    // Add to wishlist
-    wishlist.savedEvents.push(event._id);
-    await wishlist.save();
+    // Not previously saved => add, creating the wishlist doc if needed
+    try {
+      await Wishlist.updateOne(
+        { userId: firebase_uid },
+        {
+          $setOnInsert: { userId: firebase_uid },
+          $addToSet: { savedEvents: event._id },
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      // Two concurrent upserts can still collide on the unique index; retry.
+      if (err?.code === 11000) {
+        await Wishlist.updateOne(
+          { userId: firebase_uid },
+          { $addToSet: { savedEvents: event._id } }
+        );
+      } else {
+        throw err;
+      }
+    }
 
     // Record "wishlist" interaction for ML training
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';

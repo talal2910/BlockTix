@@ -57,8 +57,40 @@ export async function PUT(req, { params }) {
   try {
     await dbConnect();
     const body = await req.json();
-    const updatedEvent = await Event.findByIdAndUpdate(params.id, body, { new: true });
+    const { id } = await params;
+    const { organizerId, adminId, ...updates } = body || {};
 
+    const event = await Event.findOne({
+      $or: [{ eventId: id }, { _id: id }]
+    });
+
+    if (!event || event.deleted) {
+      return NextResponse.json({ success: false, error: 'Event not found' }, { status: 404 });
+    }
+
+    let isAuthorized = false;
+    if (adminId) {
+      const admin = await User.findOne({ firebase_uid: adminId }).lean();
+      isAuthorized = admin?.role === 'admin';
+    } else if (organizerId) {
+      isAuthorized = organizerId === event.organizerId;
+    }
+
+    if (!isAuthorized) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
+    const allowedFields = new Set([
+      'event', 'date', 'time', 'location', 'category', 'price',
+      'totalTickets', 'remainingTickets', 'image', 'earlyBird',
+      'latitude', 'longitude'
+    ]);
+
+    const safeUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([key, value]) => allowedFields.has(key) && value !== undefined)
+    );
+
+    const updatedEvent = await Event.findByIdAndUpdate(event._id, safeUpdates, { new: true });
     return NextResponse.json({ success: true, event: updatedEvent });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Update failed" }, { status: 500 });
@@ -70,6 +102,17 @@ export async function DELETE(req, { params }) {
   try {
     await dbConnect();
     const { id } = await params;
+
+    const { searchParams } = new URL(req.url);
+    const adminId = searchParams.get('adminId');
+    if (!adminId) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
+    const admin = await User.findOne({ firebase_uid: adminId }).lean();
+    if (admin?.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     
     // Find event by eventId or _id
     const event = await Event.findOne({

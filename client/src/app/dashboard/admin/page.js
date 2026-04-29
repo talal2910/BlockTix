@@ -138,7 +138,7 @@ function AdminTabs() {
 
   const deleteEvent = async (id) => {
     if (!confirm("Sure to delete event?")) return;
-    await fetch(`/api/events/${id}`, { method: "DELETE" });
+    await fetch(`/api/events/${id}?adminId=${user.uid}`, { method: "DELETE" });
     setEvents(events.filter((e) => e._id !== id));
   };
 
@@ -146,7 +146,7 @@ function AdminTabs() {
     await fetch(`/api/events/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ totalTickets: 200 }),
+      body: JSON.stringify({ totalTickets: 200, adminId: user.uid }),
     });
     fetchEventsAgain();
   };

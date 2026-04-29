@@ -34,6 +34,14 @@
     },
     "faq": [
         {
+            "question": "Hi / Hello / Hey / Greetings / How are you",
+            "answer": "Hi! How can I help you today? You can ask me to find events (e.g., 'music events in Lahore') or ask questions about tickets, payments, QR codes, and your dashboard."
+        },
+        {
+            "question": "Refund / Cancel / Cancellation",
+            "answer": "Refunds and cancellations depend on the event organizer's policy. If an event is canceled, you should typically be eligible for a refund. If you want to cancel your purchase, check the event details or contact support with your order details and event name so we can guide you."
+        },
+        {
             "question": "How do I buy tickets?",
             "answer": "Browse events at the discover page, click on an event you like, select quantity, and complete payment. You must be logged in to purchase."
         },

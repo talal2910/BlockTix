@@ -187,8 +187,8 @@ export default function Home() {
           Find and purchase tickets for the best events near you, secured by blockchain technology to prevent fraud and ensure authenticity.
         </p>
 
-        <div className="relative mt-8 w-auto flex justify-center z-20">
-          <div className="relative sm:w-96 w-3/4 group">
+        <div className="relative mt-8 w-full flex justify-center z-20 px-4">
+          <div className="relative w-full max-w-md group">
             <input
               type="text"
               placeholder="Search for events..."
@@ -228,11 +228,11 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-8 z-10">
+        <div className="mt-8 z-10 flex flex-wrap items-center justify-center gap-3 px-4">
           <button className="bg-[#FFA500] text-white py-2 px-6 rounded-md cursor-pointer border-none shadow-md hover:bg-[#FFA500] transition-colors" onClick={() => router.push('/discover')}>
             Explore
           </button>
-          <button className="bg-[#FFA500] text-white py-2 px-6 rounded-md m-2 cursor-pointer border-none shadow-md hover:bg-[#FFA500] transition-colors" onClick={handleClick}>
+          <button className="bg-[#FFA500] text-white py-2 px-6 rounded-md cursor-pointer border-none shadow-md hover:bg-[#FFA500] transition-colors" onClick={handleClick}>
             Create Event
           </button>
         </div>

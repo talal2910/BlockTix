@@ -2,16 +2,6 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import ClickPreference from "@/models/ClickPreference";
 
-/**
- * Increment a simple per-category click counter for a user.
- * This does not replace the MovieLens engine; it only provides
- * a lightweight "recent interest" signal that can be combined
- * with CSV-based scores.
- *
- * Body:
- * - firebase_uid: string (required)
- * - category: string (required, should match Event.category values)
- */
 export async function POST(req) {
   await dbConnect();
 
@@ -51,7 +41,7 @@ export async function POST(req) {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("❌ ClickPreference update failed:", error);
+    console.error("ClickPreference update failed:", error);
     return new Response(
       JSON.stringify({ success: false, message: "Internal Server Error", error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json" } }
