@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
 import Ticket from "@/models/Ticket";
 import User from '@/models/User';
+import { fillNotifiedWaitlistSlots } from '@/lib/waitlist';
 
 export async function GET(req, {params}) {
   const { id }= await params;  
@@ -90,10 +91,17 @@ export async function PUT(req, { params }) {
       Object.entries(updates).filter(([key, value]) => allowedFields.has(key) && value !== undefined)
     );
 
+    const prevRemaining = event.remainingTickets ?? 0;
     const updatedEvent = await Event.findByIdAndUpdate(event._id, safeUpdates, { new: true });
+
+    const nextRemaining = updatedEvent?.remainingTickets ?? prevRemaining;
+    const newlyAvailable = nextRemaining - prevRemaining;
+    if (newlyAvailable > 0) {
+      await fillNotifiedWaitlistSlots({ event: updatedEvent });
+    }
     return NextResponse.json({ success: true, event: updatedEvent });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Update failed" }, { status: 500 });
+    return NextResponse.json({ success: false, error: `Update failed ${error}` }, { status: 500 });
   }
 }
 

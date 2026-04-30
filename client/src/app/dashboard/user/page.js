@@ -15,6 +15,8 @@ export default function Dashboard() {
   const [loading,        setLoading]        = useState(true);
   const [wishlistLoading,setWishlistLoading]= useState(true);
   const [activeTab,      setActiveTab]      = useState('upcoming');
+  const [notifications,  setNotifications]  = useState([]);
+  const [notifLoading,   setNotifLoading]   = useState(true);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [qrToken,        setQrToken]        = useState('');
   const [showQrModal,    setShowQrModal]    = useState(false);
@@ -53,6 +55,22 @@ export default function Dashboard() {
         console.error('Error fetching wishlist:', error);
       } finally {
         setWishlistLoading(false);
+      }
+    })();
+  }, [user]);
+
+  // Fetch notifications (waitlist + others)
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const res  = await fetch(`/api/notifications?firebase_uid=${user.uid}`);
+        const data = await res.json();
+        if (data.success) setNotifications(data.notifications || []);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setNotifLoading(false);
       }
     })();
   }, [user]);
@@ -320,6 +338,7 @@ export default function Dashboard() {
               { key: 'upcoming', label: `Upcoming (${upcomingTickets.length})` },
               { key: 'past',     label: `Past (${pastTickets.length})` },
               { key: 'saved',    label: `Saved (${savedEvents.length})` },
+              { key: 'notifications', label: `Notifications (${notifications.length})` },
             ].map(tab => (
               <button
                 key={tab.key}
@@ -407,6 +426,57 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {savedEvents.map(event => <WishlistCard key={event._id} event={event} />)}
+              </div>
+            )
+          )}
+
+          {/* Notifications */}
+          {activeTab === 'notifications' && (
+            notifLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-white/10 rounded-lg p-4 border border-white/10">
+                    <Skeleton variant="text" className="w-3/4 mb-2" />
+                    <Skeleton variant="text" className="w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="flex flex-col items-center py-12 text-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Notifications</h3>
+                <p className="text-gray-700 dark:text-white/70">
+                  Waitlist and system updates will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n._id}
+                    className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white/80"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="font-semibold text-white">{n.type || 'notification'}</div>
+                      <div className="text-xs text-white/60 whitespace-nowrap">
+                        {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                      </div>
+                    </div>
+                    <div className="mt-1 text-white/80">{n.message}</div>
+                    {n.reservedUntil && (
+                      <div className="mt-1 text-sm text-white/70">
+                        Reserved until {new Date(n.reservedUntil).toLocaleString()}
+                      </div>
+                    )}
+                    {n.eventId?.eventId && (
+                      <button
+                        onClick={() => router.push(`/event/${n.eventId.eventId}`)}
+                        className="btn-sm mt-3"
+                      >
+                        View Event
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             )
           )}

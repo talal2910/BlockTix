@@ -4,33 +4,115 @@ import Ticket from "@/models/Ticket";
 import dbConnect from '@/lib/dbConnect';
 import { mintTicketNFT } from '@/lib/blockchain';
 import User from '@/models/User';
+import WaitlistEntry from '@/models/WaitlistEntry';
+import { fillNotifiedWaitlistSlots } from '@/lib/waitlist';
 
 
 //route for creating tickets
 export async function POST(req) {
+  let rollbackEventObjectId = null;
+  let rollbackUserId = null;
+  let decrementedInventory = false;
+  let consumedWaitlist = false;
+
+  const rollbackPurchase = async () => {
+    if (!rollbackEventObjectId || !rollbackUserId) return;
+
+    if (decrementedInventory) {
+      try {
+        await Event.updateOne({ _id: rollbackEventObjectId }, { $inc: { remainingTickets: 1 } });
+      } catch {
+        // ignore
+      }
+      decrementedInventory = false;
+    }
+
+    if (consumedWaitlist) {
+      try {
+        await WaitlistEntry.updateOne(
+          { eventId: rollbackEventObjectId, userId: rollbackUserId, status: 'purchased' },
+          { $set: { status: 'notified' } }
+        );
+      } catch {
+        // ignore
+      }
+      consumedWaitlist = false;
+    }
+  };
+
   try {
     await dbConnect();
 
     const { eventId, userId } = await req.json();
 
 
-    const event = await Event.findById(eventId);
+    rollbackUserId = userId;
+
+    const event = await Event.findById(eventId).lean();
     if (!event) {
       return new Response(JSON.stringify({ error: "Event not found" }), { status: 404 });
     }
-    let ticketPrice = event.price; // default regular price
-    if (
-      event.earlyBird?.enabled &&
-      new Date() <= new Date(event.earlyBird.endDate) &&
-      event.earlyBird.soldCount < event.earlyBird.maxTickets
-    ) {
-      ticketPrice = event.earlyBird.discountPrice;
-      event.earlyBird.soldCount += 1; // track early bird sales
+
+    rollbackEventObjectId = event._id;
+
+    const hasWaitlist = await WaitlistEntry.exists({ eventId: event._id });
+
+    // Priority mode: only `notified` users can purchase (FIFO promotion fills notified slots)
+    if (hasWaitlist) {
+      await fillNotifiedWaitlistSlots({ event });
+
+      const consumed = await WaitlistEntry.findOneAndUpdate(
+        { eventId: event._id, userId, status: 'notified' },
+        { $set: { status: 'purchased', reservedUntil: null } },
+        { new: false }
+      );
+
+      if (!consumed) {
+        return new Response(JSON.stringify({ error: 'Tickets sold out' }), { status: 400 });
+      }
+
+      consumedWaitlist = true;
     }
 
+    // Atomic decrement to prevent overselling
+    const updatedEvent = await Event.findOneAndUpdate(
+      { _id: event._id, remainingTickets: { $gt: 0 } },
+      { $inc: { remainingTickets: -1 } },
+      { new: true }
+    ).lean();
 
-    if (event.remainingTickets <= 0) {
-      return new Response(JSON.stringify({ error: "Tickets sold out" }), { status: 400 });
+    if (!updatedEvent) {
+      await rollbackPurchase();
+      return new Response(JSON.stringify({ error: 'Tickets sold out' }), { status: 400 });
+    }
+
+    decrementedInventory = true;
+
+    const now = new Date();
+    let ticketPrice = updatedEvent.price; // default regular price
+
+    // Claim early-bird slot atomically (best-effort)
+    const eb = updatedEvent.earlyBird;
+    if (
+      eb?.enabled &&
+      eb.endDate &&
+      now <= new Date(eb.endDate) &&
+      typeof eb.maxTickets === 'number' &&
+      typeof eb.discountPrice === 'number'
+    ) {
+      const ebClaim = await Event.updateOne(
+        {
+          _id: updatedEvent._id,
+          'earlyBird.enabled': true,
+          'earlyBird.endDate': { $gte: now },
+          'earlyBird.soldCount': { $lt: eb.maxTickets },
+        },
+        { $inc: { 'earlyBird.soldCount': 1 } }
+      );
+
+      if (ebClaim.modifiedCount > 0) {
+        ticketPrice = eb.discountPrice;
+      }
     }
 
     const platformWallet = process.env.PLATFORM_CUSTODY_ADDRESS;
@@ -39,8 +121,8 @@ export async function POST(req) {
     // Organizer wallet (optional) — used for on-chain ERC-2981 receiver and off-chain royalty ledger.
     let organizerWalletAddress = null;
     try {
-      if (event.organizerId) {
-        const organizerUser = await User.findOne({ firebase_uid: event.organizerId }).lean();
+      if (updatedEvent.organizerId) {
+        const organizerUser = await User.findOne({ firebase_uid: updatedEvent.organizerId }).lean();
         organizerWalletAddress = organizerUser?.walletAddress || null;
         if (typeof organizerUser?.defaultRoyaltyBps === 'number') {
           // Enforce the same cap as the model/API (0..1000)
@@ -84,6 +166,7 @@ export async function POST(req) {
       if (mintResult.txHash) {
         const existingTicket = await Ticket.findOne({ txHash: mintResult.txHash });
         if (existingTicket) {
+          await rollbackPurchase();
           return new Response(JSON.stringify({
             error: "This transaction has already been processed",
             ticket: existingTicket
@@ -96,13 +179,13 @@ export async function POST(req) {
     }
 
     const ticketData = {
-      eventId: event._id,
+      eventId: updatedEvent._id,
       userId,
       mintStatus: (mintResult.tokenId !== null && mintResult.tokenId !== undefined) ? "minted" : "failed",
       contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
       custodial: true,
       ownerWallet: platformWallet,
-      originalOrganizerId: event.organizerId,
+      originalOrganizerId: updatedEvent.organizerId,
       originalPurchasePrice: ticketPrice,
       royaltyBps,
       royaltyReceiverWallet: organizerWalletAddress
@@ -125,12 +208,14 @@ export async function POST(req) {
         if (duplicateField === 'txHash') {
 
           const existingTicket = await Ticket.findOne({ txHash: mintResult.txHash });
+          await rollbackPurchase();
           return new Response(JSON.stringify({
             error: "This transaction has already been processed",
             ticket: existingTicket
           }), { status: 409 });
         } else if (duplicateField === 'tokenId' || saveError.message.includes('contractAddress_1_tokenId_1')) {
           console.error("Duplicate tokenId detected - this should not happen with blockchain sequential IDs");
+          await rollbackPurchase();
           return new Response(JSON.stringify({
             error: "A ticket with this tokenId already exists. Please contact support."
           }), { status: 409 });
@@ -139,22 +224,42 @@ export async function POST(req) {
       throw saveError;
     }
 
-    event.remainingTickets -= 1;
-    event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1; // increment sold count
+    try {
+      await WaitlistEntry.updateMany(
+        { eventId: updatedEvent._id, userId, status: { $ne: 'purchased' } },
+        { $set: { status: 'purchased', reservedUntil: null } }
+      );
+    } catch (err) {
+      console.warn('Failed to update waitlist status:', err);
+    }
 
-    await event.save();
+    // Remove from waitlist after purchase (requested behavior)
+    try {
+      await WaitlistEntry.deleteOne({ eventId: updatedEvent._id, userId });
+    } catch (err) {
+      console.warn('Failed to remove waitlist entry after purchase:', err);
+    }
+
+    // Purchase is successful — no rollback beyond this point
+    decrementedInventory = false;
+    consumedWaitlist = false;
 
     // Record purchase as recommendation signal
-    if (userId && event.category) {
+    if (userId && updatedEvent.category) {
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/preferences/click`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firebase_uid: userId, category: event.category }),
+        body: JSON.stringify({ firebase_uid: userId, category: updatedEvent.category }),
       }).catch(() => {});
     }
 
     return new Response(JSON.stringify({ success: true, ticket }), { status: 201 });
   } catch (error) {
+    try {
+      await rollbackPurchase();
+    } catch {
+      // ignore
+    }
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }

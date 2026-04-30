@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
 import { useParams } from 'next/navigation';
@@ -27,6 +27,10 @@ function Event() {
   const [error,      setError]      = useState(null);
   const [isSaved,    setIsSaved]    = useState(false);
   const [savingWish, setSavingWish] = useState(false);
+  const [waitlistStatus, setWaitlistStatus] = useState('none');
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+  const [canBuy, setCanBuy] = useState(true);
+  const [buyBlockMessage, setBuyBlockMessage] = useState(null);
 
   const { user } = useAuth();
 
@@ -35,7 +39,7 @@ function Event() {
     { ssr: false }
   );
 
-  async function fetchEvent() {
+  const fetchEvent = useCallback(async () => {
     try {
       const res  = await fetch(`/api/events/${id}`);
       const data = await res.json();
@@ -45,12 +49,12 @@ function Event() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
   // Fetch event on mount
   useEffect(() => {
     if (id) fetchEvent();
-  }, [id]);
+  }, [id, fetchEvent]);
 
   // Record "view" once event is loaded and user is known
   useEffect(() => {
@@ -72,6 +76,76 @@ function Event() {
       })
       .catch(() => {});
   }, [user?.uid, id]);
+
+  // Check waitlist status for this event
+  useEffect(() => {
+    if (!user?.uid || !id) return;
+    fetch(`/api/waitlist?firebase_uid=${user.uid}&event_id=${id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setWaitlistStatus(data.status || (data.joined ? 'waiting' : 'none'));
+        }
+      })
+      .catch(() => {});
+  }, [user?.uid, id]);
+
+  const refreshAvailability = useCallback(async () => {
+    if (!id) return;
+    try {
+      const qs = user?.uid
+        ? `?event_id=${encodeURIComponent(id)}&firebase_uid=${encodeURIComponent(user.uid)}`
+        : `?event_id=${encodeURIComponent(id)}`;
+      const res = await fetch(`/api/waitlist/availability${qs}`);
+      const data = await res.json();
+      if (data.success) {
+        setCanBuy(!!data.canBuy);
+        setBuyBlockMessage(data.message || null);
+      }
+    } catch {
+      // ignore
+    }
+  }, [id, user?.uid]);
+
+  useEffect(() => {
+    refreshAvailability();
+  }, [refreshAvailability]);
+
+  useEffect(() => {
+    if (!id) return;
+    // Poll lightly so the buy button updates after restocks
+    const interval = setInterval(() => {
+      refreshAvailability();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [id, refreshAvailability]);
+
+  async function handleJoinWaitlist() {
+    if (!user) {
+      toast.error('Login to join waitlist');
+      return;
+    }
+    try {
+      setJoiningWaitlist(true);
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firebase_uid: user.uid, event_id: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || 'Unable to join waitlist');
+        return;
+      }
+      setWaitlistStatus('waiting');
+      toast.success('Joined waitlist');
+      refreshAvailability();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setJoiningWaitlist(false);
+    }
+  }
 
   async function handleToggleWishlist() {
     if (!user) {
@@ -111,11 +185,16 @@ function Event() {
       });
       const data = await res.json();
 
-      if (!res.ok) { toast.error(data.error || 'Something went wrong'); return; }
+      if (!res.ok) {
+        const msg = data.error || 'Something went wrong';
+        toast.error(msg);
+        return;
+      }
 
       toast.success('🎟️ Ticket purchased successfully!');
       recordInteraction(user.uid, id, 'purchase');
       fetchEvent();
+      refreshAvailability();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -201,6 +280,12 @@ function Event() {
         <div className="lg:col-span-1 lg:row-span-2 top-8 rounded-3xl border border-white/10 bg-white/10 p-8 shadow-xl backdrop-blur-md">
           <h2 className="mb-8 text-center text-2xl font-bold text-white">Get Tickets</h2>
 
+          {buyBlockMessage && (
+            <div className="mb-4 rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
+              {buyBlockMessage}
+            </div>
+          )}
+
           <div className="mb-8 text-center">
             {earlyBirdActive ? (
               <div className="flex flex-col items-center">
@@ -223,15 +308,34 @@ function Event() {
 
           <button
             onClick={handleBuyTicket}
-            disabled={event.remainingTickets === 0}
+            disabled={event.remainingTickets === 0 || !canBuy}
             className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition cursor-pointer
-              ${event.remainingTickets > 0
+              ${event.remainingTickets > 0 && canBuy
                 ? 'bg-gradient-to-r from-[#FFA500] to-indigo-600 text-white'
                 : 'bg-white/10 text-white/50 cursor-not-allowed'
               }`}
           >
-            {event.remainingTickets > 0 ? 'Buy Tickets' : 'Sold Out'}
+            {event.remainingTickets > 0 && canBuy ? 'Buy Tickets' : 'Sold Out'}
           </button>
+
+          {/* Waitlist: show when user is effectively sold out */}
+          {!canBuy && user && (
+            <div className="mt-4">
+              {waitlistStatus === 'waiting' || waitlistStatus === 'notified' ? (
+                <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white/80">
+                  <div className="font-semibold text-white">You are on the waitlist</div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleJoinWaitlist}
+                  disabled={joiningWaitlist}
+                  className="btn-sm w-full disabled:opacity-60"
+                >
+                  {joiningWaitlist ? 'Joining waitlist...' : 'Join Waitlist'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* LOCATION */}

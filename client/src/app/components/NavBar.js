@@ -1,13 +1,66 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { FaBell } from 'react-icons/fa';
 
 function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotif, setLoadingNotif] = useState(false);
   const { user, logout } = useAuth();
 
   const isAuthed = !!user && user.emailVerified;
+
+  const unreadCount = useMemo(
+    () => (notifications || []).filter(n => !n.read).length,
+    [notifications]
+  );
+
+  useEffect(() => {
+    if (!isAuthed) {
+      setNotifications([]);
+      setIsNotifOpen(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingNotif(true);
+        const res = await fetch(`/api/notifications?firebase_uid=${encodeURIComponent(user.uid)}&limit=20`);
+        const data = await res.json();
+        if (!cancelled && data.success) {
+          setNotifications(data.notifications || []);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setLoadingNotif(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [isAuthed, user?.uid]);
+
+  async function toggleNotifications() {
+    const next = !isNotifOpen;
+    setIsNotifOpen(next);
+    if (!next) return;
+
+    if (!isAuthed) return;
+    try {
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firebase_uid: user.uid }),
+      });
+      setNotifications(prev => (prev || []).map(n => ({ ...n, read: true })));
+    } catch {
+      // ignore
+    }
+  }
 
 
 
@@ -54,6 +107,59 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           {isAuthed ? (
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={toggleNotifications}
+                  className="relative p-2 rounded-xl text-white bg-white/5 hover:bg-white/10 border border-white/10 transition"
+                  aria-label="Notifications"
+                >
+                  <FaBell className="text-base" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 text-[10px] bg-[#FFA500] text-black font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {isNotifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 max-h-[70vh] overflow-auto rounded-2xl border border-white/10 bg-gray-900/95 backdrop-blur-2xl shadow-2xl">
+                    <div className="p-3 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-white">Notifications</span>
+                      <button
+                        onClick={() => setIsNotifOpen(false)}
+                        className="text-white/70 hover:text-white text-xs"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    <div className="p-3">
+                      {loadingNotif ? (
+                        <div className="text-sm text-white/60">Loading…</div>
+                      ) : (notifications?.length ? (
+                        <div className="space-y-2">
+                          {notifications.slice(0, 20).map((n) => (
+                            <div key={n._id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                              <div className="text-sm text-white">{n.message}</div>
+                              {n.reservedUntil && (
+                                <div className="mt-1 text-xs text-white/60">
+                                  Reserved until: {new Date(n.reservedUntil).toLocaleString()}
+                                </div>
+                              )}
+                              <div className="mt-1 text-[11px] text-white/50">
+                                {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-white/60">No notifications yet.</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Link href="/profile" className={secondaryBtnClassDesktop}>Profile</Link>
               <button onClick={logout} className="btn w-auto no-underline">Log Out</button>
             </div>
@@ -97,21 +203,21 @@ function Navbar() {
               <div className="relative p-4 flex flex-col gap-3">
 
                 {/* Mobile Links - styles match desktop font weight/color via 'link' class */}
-                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">Home</Link>
-                <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">Discover</Link>
-                <Link href="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">Marketplace</Link>
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2  font-medium">Home</Link>
+                <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2  font-medium">Discover</Link>
+                <Link href="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2  font-medium">Marketplace</Link>
 
                 {isAuthed && user.role !== 'user' && (
                   <Link
                     href="/dashboard/organizer"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="link block py-2 text-center font-medium"
+                    className="link block py-2 font-medium"
                   >
                     Dashboard
                   </Link>
                 )}
                 {isAuthed && (
-                  <Link href="/dashboard/user" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">My Tickets</Link>
+                  <Link href="/dashboard/user" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 font-medium">My Tickets</Link>
                 )}
 
                 <div className="border-t border-white/10 my-1"></div>
