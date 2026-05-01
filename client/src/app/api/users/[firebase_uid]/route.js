@@ -21,6 +21,8 @@ export async function GET(req, context) {
       name: user.name,
       email: user.email,
       role: user.role,
+      bio: user.bio || '',
+      profilePicture: user.profilePicture || '',
       walletAddress: user.walletAddress || null,
       royaltyBalance: user.royaltyBalance || 0,
       defaultRoyaltyBps: typeof user.defaultRoyaltyBps === 'number' ? user.defaultRoyaltyBps : 500,

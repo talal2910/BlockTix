@@ -129,11 +129,11 @@ export default function LocationPicker({ setCoordinates }) {
 
         {/* Suggestions Dropdown */}
         {suggestions.length > 0 && (
-          <ul className="absolute top-full left-0 w-full bg-white/10 border border-white/10 rounded-lg max-h-60 overflow-auto mt-1 shadow-lg z-[9999]">
+          <ul className="absolute top-full left-0 w-full bg-gray-900 border border-white/20 rounded-lg max-h-60 overflow-auto mt-1 shadow-lg z-[9999]">
             {suggestions.map((item) => (
               <li
                 key={item.place_id}
-                className="p-2 hover:bg-white/20 cursor-pointer text-white"
+                className="p-2 hover:bg-white/10 cursor-pointer text-white text-sm"
                 onClick={() => handleSelectSuggestion(item)}
               >
                 {item.display_name}
@@ -148,7 +148,6 @@ export default function LocationPicker({ setCoordinates }) {
         center={[24.8607, 67.0011]}
         zoom={13}
         className="w-full h-[300px] md:h-[400px] lg:h-[500px] rounded-xl"
-        ref={mapRef}
       >
         <ResizeOnMount />
         <FlyToLocation coords={flyPos} />

@@ -15,14 +15,14 @@ const DATA_DIR   = __dirname;
 const MODEL_PATH = path.join(DATA_DIR, 'model_weights.json');
 
 // Hyperparameters 
-const N_FACTORS = 20;     // number of latent factors
-const N_EPOCHS  = 30;     // full passes over training data
-const LR        = 0.005;  // SGD learning rate
-const REG       = 0.02;   // L2 regularisation lambda
+const N_FACTORS = 8;     // number of latent factors
+const N_EPOCHS  = 80;     // full passes over training data
+const LR        = 0.003;  // SGD learning rate
+const REG       = 0.015;   // L2 regularisation lambda
 
 // How much each interaction type is worth as a signal.
 // purchase > wishlist > view  (a paid user is the strongest signal)
-const INTERACTION_WEIGHTS = { purchase: 3.0, wishlist: 1.5, view: 1.0 };
+const INTERACTION_WEIGHTS = { purchase: 2.0, wishlist: 1.5, view: 1.0 };
 
 // RFC-4180 compliant CSV parser
 // The default naive split(",") breaks on fav_categories which looks like:
@@ -94,10 +94,10 @@ const ratingMap = {};
 interRaw.forEach(r => {
   const key     = `${r.user_id}_${r.event_id}`;
   const w       = INTERACTION_WEIGHTS[r.interaction_type] ?? 1.0;
-  const wRating = parseFloat(r.rating) * w;
+  const wRating = (parseFloat(r.rating) * w) / 3.0;
   if (!ratingMap[key] || wRating > ratingMap[key].rating) {
-    ratingMap[key] = { userId: r.user_id, eventId: r.event_id, rating: wRating };
-  }
+  ratingMap[key] = { userId: r.user_id, eventId: r.event_id, rating: wRating };
+}
 });
 const ratings = Object.values(ratingMap);
 
@@ -161,8 +161,8 @@ for (let epoch = 1; epoch <= N_EPOCHS; epoch++) {
   }
 }
 
-// Evaluation: Precision and Recall
-console.log('\nEvaluating Precision / Recall...');
+// Evaluation: Precision, Recall, NDCG
+console.log('\nEvaluating Metrics...');
 
 const userRatings = {};
 ratings.forEach(r => {
@@ -171,17 +171,29 @@ ratings.forEach(r => {
 });
 
 const sampleUsers = userIds.filter((_, i) => i % 10 === 0);
-let totalP = 0, totalR = 0, nEval = 0;
+let totalP = 0, totalR = 0, totalNDCG = 0, nEval = 0;
+
+function ndcg(predicted, trueCats, k = 3) {
+  let dcg = 0, idcg = 0;
+  for (let i = 0; i < k; i++) {
+    const rel = trueCats.has(predicted[i]) ? 1 : 0;
+    dcg += rel / Math.log2(i + 2);
+  }
+  const idealHits = Math.min(trueCats.size, k);
+  for (let i = 0; i < idealHits; i++) idcg += 1 / Math.log2(i + 2);
+  return idcg > 0 ? dcg / idcg : 0;
+}
 
 for (const uid of sampleUsers) {
   const urMap = userRatings[uid] || {};
   const eids  = Object.keys(urMap);
   if (eids.length < 5) continue;
 
-  const split    = Math.floor(eids.length * 0.8);
-  const testEids = eids.slice(split);
+  const shuffledEids = [...eids].sort(() => Math.random() - 0.5);
+  const split        = Math.floor(shuffledEids.length * 0.8);
+  const testEids     = shuffledEids.slice(split);
   const trueCats = new Set(
-    testEids.filter(e => urMap[e] >= 3.0).map(e => eventCat[e]).filter(Boolean)
+  testEids.filter(e => urMap[e] >= 1.0).map(e => eventCat[e]).filter(Boolean)
   );
   if (!trueCats.size) continue;
 
@@ -191,7 +203,7 @@ for (const uid of sampleUsers) {
     const ei  = eventIdx[eid];
     const cat = eventCat[eid];
     if (!cat || ei === undefined) return;
-    const s  = dot(P[ui], Q[ei]);
+    const s  = dot(P[ui], Q[ei]);        // <-- raw dot, no sigmoid
     catS[cat] = (catS[cat] || 0) + s;
     catC[cat] = (catC[cat] || 0) + 1;
   });
@@ -203,13 +215,16 @@ for (const uid of sampleUsers) {
     .map(([c]) => c);
 
   const hits = top3.filter(c => trueCats.has(c)).length;
-  totalP += hits / 3;
-  totalR += hits / trueCats.size;
+  totalP    += hits / 3;
+  totalR    += hits / trueCats.size;
+  totalNDCG += ndcg(top3, trueCats, 3);
   nEval++;
 }
 
-const p3 = nEval > 0 ? totalP / nEval : 0;
-const r3 = nEval > 0 ? totalR / nEval : 0;
+const p3   = nEval > 0 ? totalP    / nEval : 0;
+const r3   = nEval > 0 ? totalR    / nEval : 0;
+const f1   = (p3 + r3) > 0 ? 2 * p3 * r3 / (p3 + r3) : 0;
+const ndcg3 = nEval > 0 ? totalNDCG / nEval : 0;
 
 // Save model
 const modelData = {
@@ -229,6 +244,11 @@ const modelData = {
     precisionAt3   : parseFloat(p3.toFixed(4)),
     recallAt3      : parseFloat(r3.toFixed(4)),
     trainedAt      : new Date().toISOString(),
+    finalRMSE      : parseFloat(finalRMSE.toFixed(4)),
+    precisionAt3   : parseFloat(p3.toFixed(4)),
+    recallAt3      : parseFloat(r3.toFixed(4)),
+    f1At3          : parseFloat(f1.toFixed(4)),
+    ndcgAt3        : parseFloat(ndcg3.toFixed(4)),
   },
   userIds,    // string[] — all user IDs that appear in interactions
   eventIds,   // string[] — all event IDs that appear in interactions
@@ -255,8 +275,10 @@ console.log(`  Synthetic users  : ${usersRaw.length - realUsers}`);
 console.log(`  Real events      : ${realEvents}`);
 console.log(`  Synthetic events : ${eventsRaw.length - realEvents}`);
 console.log(`  Final RMSE       : ${finalRMSE.toFixed(4)}`);
-console.log(`  Precision        : ${(p3 * 100).toFixed(1)}%`);
-console.log(`  Recall           : ${(r3 * 100).toFixed(1)}%`);
+console.log(`  Precision@3      : ${(p3    * 100).toFixed(1)}%`);
+console.log(`  Recall@3         : ${(r3    * 100).toFixed(1)}%`);
+console.log(`  F1@3             : ${(f1    * 100).toFixed(1)}%`);
+console.log(`  NDCG@3           : ${(ndcg3 * 100).toFixed(1)}%`);
 console.log(`  Saved to         : ml/model_weights.json  (${sizeKB} KB)`);
 console.log(`${'='.repeat(54)}\n`);
 console.log('The server will pick up this model automatically (no restart needed).');

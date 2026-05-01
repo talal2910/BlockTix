@@ -55,7 +55,7 @@ function OrganizerDashboard() {
   const glassContent = "bg-transparent";
   const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
   const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
-  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white";
+  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white [&>option]:bg-gray-900 [&>option]:text-white";
   const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition text-white/80 font-medium backdrop-blur-sm shadow-sm";
   const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
 
@@ -384,7 +384,7 @@ function OrganizerDashboard() {
                       <DollarIcon />
                     </div>
                     <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
-                      <h3 className="text-3xl font-bold text-[#FFA500]">${analytics.totalRevenue.toLocaleString()}</h3>
+                      <h3 className="text-3xl font-bold text-[#FFA500]">Rs {analytics.totalRevenue.toLocaleString()}</h3>
                   </div>
 
                   {/* Tickets Sold */}
@@ -741,7 +741,7 @@ function OrganizerDashboard() {
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row gap-4 pt-6">
                       <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-[#FFA500]/20 outline-none hover:scale-[1.01] transition-transform`}>
-                        Create Event
+                        {isEditing ? 'Edit Event' : 'Create Event'}
                       </button>
                       <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} flex-1 py-4 outline-none`}>
                         Cancel

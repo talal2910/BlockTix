@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
         hostname: 'localhost',
       },
     ],
+    unoptimized: true,
   },
   webpack: (config) => {
     config.module = config.module || {};

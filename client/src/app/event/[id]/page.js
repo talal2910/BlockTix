@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 
-// Fire-and-forget — must never throw or block the UI
 function recordInteraction(firebase_uid, event_id, interaction_type) {
   if (!firebase_uid || !event_id) return;
   fetch('/api/recommendations/record', {
@@ -17,8 +17,14 @@ function recordInteraction(firebase_uid, event_id, interaction_type) {
   }).catch(() => {});
 }
 
+ const EventMap = dynamic(
+    () => import('@/app/components/EventMap'),
+    { ssr: false }
+  );
+
 function Event() {
   const params = useParams();
+  const router = useRouter();
   const id     = params.id;   // eventId UUID
 
   const [event,      setEvent]      = useState(null);
@@ -28,16 +34,19 @@ function Event() {
   const [isSaved,    setIsSaved]    = useState(false);
   const [savingWish, setSavingWish] = useState(false);
   const [waitlistStatus, setWaitlistStatus] = useState('none');
-  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
-  const [canBuy, setCanBuy] = useState(true);
-  const [buyBlockMessage, setBuyBlockMessage] = useState(null);
+  const [joiningWaitlist,setJoiningWaitlist]= useState(false);
+  const [canBuy,         setCanBuy]         = useState(true);
+  const [buyBlockMessage,setBuyBlockMessage]= useState(null);
+  const [organizer,      setOrganizer]      = useState(null);
+  const [organizerBusy,  setOrganizerBusy]  = useState(false);
+  const [ratingSummary,  setRatingSummary]  = useState({
+    averageRating: 0, ratingsCount: 0, canRate: false, userRating: null,
+  });
+  const [selectedRating, setSelectedRating] = useState(0);
+  const ratingCommentRef = React.useRef('');
+  const [submittingRating,setSubmittingRating] = useState(false);
 
   const { user } = useAuth();
-
-  const EventMap = dynamic(
-    () => import('@/app/components/EventMap'),
-    { ssr: false }
-  );
 
   const fetchEvent = useCallback(async () => {
     try {
@@ -54,16 +63,50 @@ function Event() {
   // Fetch event on mount
   useEffect(() => {
     if (id) fetchEvent();
-  }, [id, fetchEvent]);
+   }, [id, fetchEvent]);
 
-  // Record "view" once event is loaded and user is known
   useEffect(() => {
-    if (id && user?.uid && event) {
-      recordInteraction(user.uid, id, 'view');
-    }
+    if (!event?.organizerId) return;
+    let cancelled = false;
+    const fetchOrganizer = async () => {
+      try {
+        const qs  = user?.uid ? `?viewerId=${encodeURIComponent(user.uid)}` : '';
+        const res = await fetch(`/api/organizers/${encodeURIComponent(event.organizerId)}${qs}`);
+        const data = await res.json();
+        if (!cancelled && res.ok && data.success) setOrganizer(data.organizer);
+      } catch {
+        if (!cancelled) setOrganizer(null);
+      }
+    };
+    fetchOrganizer();
+    return () => { cancelled = true; };
+  }, [event?.organizerId, user?.uid]);
+
+  const fetchRatings = useCallback(async () => {
+    if (!id) return;
+    try {
+      const qs   = user?.uid ? `?userId=${encodeURIComponent(user.uid)}` : '';
+      const res  = await fetch(`/api/events/${id}/ratings${qs}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRatingSummary({
+          averageRating: data.averageRating || 0,
+          ratingsCount : data.ratingsCount  || 0,
+          canRate      : Boolean(data.canRate),
+          userRating   : data.userRating    || null,
+        });
+        setSelectedRating(data.userRating?.rating || 0);
+        ratingCommentRef.current = data.userRating?.comment || '';
+      }
+    } catch {}
+  }, [id, user?.uid]);
+
+  useEffect(() => { fetchRatings(); }, [fetchRatings]);
+
+  useEffect(() => {
+    if (id && user?.uid && event) recordInteraction(user.uid, id, 'view');
   }, [id, user?.uid, event]);
 
-  // Check if this event is already in the user's wishlist
   useEffect(() => {
     if (!user?.uid || !id) return;
     fetch(`/api/wishlist?firebase_uid=${user.uid}`)
@@ -77,7 +120,6 @@ function Event() {
       .catch(() => {});
   }, [user?.uid, id]);
 
-  // Check waitlist status for this event
   useEffect(() => {
     if (!user?.uid || !id) return;
     fetch(`/api/waitlist?firebase_uid=${user.uid}&event_id=${id}`)
@@ -121,22 +163,16 @@ function Event() {
   }, [id, refreshAvailability]);
 
   async function handleJoinWaitlist() {
-    if (!user) {
-      toast.error('Login to join waitlist');
-      return;
-    }
+    if (!user) { toast.error('Login to join waitlist'); return; }
     try {
       setJoiningWaitlist(true);
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
+      const res  = await fetch('/api/waitlist', {
+        method : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firebase_uid: user.uid, event_id: id }),
+        body   : JSON.stringify({ firebase_uid: user.uid, event_id: id }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.message || 'Unable to join waitlist');
-        return;
-      }
+      if (!res.ok) { toast.error(data.message || 'Unable to join waitlist'); return; }
       setWaitlistStatus('waiting');
       toast.success('Joined waitlist');
       refreshAvailability();
@@ -148,10 +184,7 @@ function Event() {
   }
 
   async function handleToggleWishlist() {
-    if (!user) {
-      toast.error('Login to save events');
-      return;
-    }
+    if (!user) { toast.error('Login to save events'); return; }
     try {
       setSavingWish(true);
       const res  = await fetch('/api/wishlist', {
@@ -161,7 +194,6 @@ function Event() {
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.message || 'Something went wrong'); return; }
-
       setIsSaved(data.saved);
       toast.success(data.saved ? 'Saved to wishlist' : 'Removed from wishlist');
     } catch (err) {
@@ -171,26 +203,64 @@ function Event() {
     }
   }
 
-  async function handleBuyTicket() {
-    if (!user) {
-      toast.error('Login to buy tickets');
-      return;
+  async function handleToggleOrganizerFollow() {
+    if (!user?.uid) { toast.error('Login to follow organizers'); router.push('/login'); return; }
+    if (!event?.organizerId) return;
+    try {
+      setOrganizerBusy(true);
+      const res  = await fetch(`/api/organizers/${encodeURIComponent(event.organizerId)}/follow`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ userId: user.uid }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) { toast.error(data.error || 'Unable to update follow'); return; }
+      setOrganizer(prev => ({ ...(prev || {}), isFollowing: data.isFollowing, followersCount: data.followersCount }));
+      toast.success(data.isFollowing ? 'Following organizer' : 'Unfollowed organizer');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setOrganizerBusy(false);
     }
+  }
+
+  async function handleSubmitRating() {
+    if (!user?.uid)      { toast.error('Login to rate events'); return; }
+    if (!selectedRating) { toast.error('Choose a rating first'); return; }
+    try {
+      setSubmittingRating(true);
+      const res  = await fetch(`/api/events/${id}/ratings`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid, rating: selectedRating, comment: ratingCommentRef.current }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) { toast.error(data.error || 'Unable to save rating'); return; }
+      setRatingSummary(prev => ({
+        ...prev,
+        averageRating: data.averageRating || 0,
+        ratingsCount : data.ratingsCount  || 0,
+        userRating   : data.rating,
+      }));
+      toast.success('Rating saved');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSubmittingRating(false);
+    }
+  }
+
+  async function handleBuyTicket() {
+    if (!user) { toast.error('Login to buy tickets'); return; }
     try {
       setIsBuying(true);
-      const res = await fetch('/api/tickets', {
+      const res  = await fetch('/api/tickets', {
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify({ eventId: event._id, userId: user.uid }),
       });
       const data = await res.json();
-
-      if (!res.ok) {
-        const msg = data.error || 'Something went wrong';
-        toast.error(msg);
-        return;
-      }
-
+      if (!res.ok) { toast.error(data.error || 'Something went wrong'); return; }
       toast.success('🎟️ Ticket purchased successfully!');
       recordInteraction(user.uid, id, 'purchase');
       fetchEvent();
@@ -206,20 +276,29 @@ function Event() {
   if (error)   return <p className="p-6 text-red-500">{error}</p>;
   if (!event)  return <p className="p-6">No event found</p>;
 
-  const googleMapsUrl =
-    event.latitude && event.longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`
-      : null;
+  const googleMapsUrl = event.latitude && event.longitude
+    ? `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`
+    : null;
 
-  const eb           = event.earlyBird;
-  const now          = new Date();
-  const isTimeValid  = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
-  const isQuotaValid = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
+  const eb              = event.earlyBird;
+  const now             = new Date();
+  const isTimeValid     = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
+  const isQuotaValid    = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
   const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
+
+  const organizerRatingLabel = organizer?.ratingsCount
+    ? `${Number(organizer.averageRating || 0).toFixed(1)} / 5`
+    : 'No ratings yet';
+  const eventRatingLabel = ratingSummary.ratingsCount
+    ? `${Number(ratingSummary.averageRating || 0).toFixed(1)} / 5`
+    : 'No ratings yet';
+
+  const cardBase = 'rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 shadow-lg';
 
   return (
     <div className="min-h-screen">
-      {/* HERO */}
+
+      {/* ── HERO ── */}
       <div className="p-4 md:p-8">
         <div
           className="relative flex h-[500px] w-full items-end bg-cover bg-center rounded-3xl overflow-hidden shadow-2xl"
@@ -227,7 +306,6 @@ function Event() {
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-          {/* Wishlist button*/}
           {user && (
             <button
               onClick={handleToggleWishlist}
@@ -236,8 +314,8 @@ function Event() {
               title={isSaved ? 'Remove from wishlist' : 'Save to wishlist'}
             >
               {isSaved
-                ? <FaHeart className="text-red-400 text-lg" />
-                : <FaRegHeart className="text-white text-lg" />
+                ? <FaHeart    className="text-red-400 text-lg" />
+                : <FaRegHeart className="text-white  text-lg" />
               }
             </button>
           )}
@@ -245,18 +323,15 @@ function Event() {
           <div className="relative z-10 w-full p-8">
             <div className="mx-auto max-w-7xl space-y-4 text-white">
               <h1 className="text-4xl md:text-5xl font-extrabold">{event.event}</h1>
-              <div className="flex flex-wrap gap-4">
-                <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
-                  <FaCalendarAlt className="mr-2" />
-                  {new Date(event.date).toLocaleDateString()}
+              <div className="flex flex-wrap gap-3">
+                <span className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm backdrop-blur-md">
+                  <FaCalendarAlt /> {new Date(event.date).toLocaleDateString()}
                 </span>
-                <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
-                  <FaClock className="mr-2" />
-                  {event.time}
+                <span className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm backdrop-blur-md">
+                  <FaClock /> {event.time}
                 </span>
-                <span className="flex items-center rounded-full bg-white/20 px-4 py-2 backdrop-blur-md">
-                  <FaMapMarkerAlt className="mr-2" />
-                  {event.location}
+                <span className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm backdrop-blur-md">
+                  <FaMapMarkerAlt /> {event.location}
                 </span>
               </div>
             </div>
@@ -265,46 +340,38 @@ function Event() {
       </div>
 
       {/* CONTENT GRID */}
-      <div className="mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="mx-auto max-w-7xl px-4 pb-16 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-        {/* ABOUT */}
-        <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg border border-white/10">
-          <h3 className="mb-6 text-3xl font-bold text-white">About This Event</h3>
-          <p className="text-lg leading-relaxed text-white/70">
-            Join us for an unforgettable experience! This event promises to
-            deliver amazing moments and create lasting memories.
-          </p>
-        </div>
+        {/* ── TICKET PANEL — sticky sidebar, spans all rows ── */}
+        <div className="lg:col-start-3 lg:row-start-1 lg:row-span-5 lg:sticky lg:top-20 self-start">
+          <div className={`${cardBase} p-8`}>
+            <h2 className="mb-6 text-center text-2xl font-bold text-white">Get Tickets</h2>
 
-        {/* TICKETS */}
-        <div className="lg:col-span-1 lg:row-span-2 top-8 rounded-3xl border border-white/10 bg-white/10 p-8 shadow-xl backdrop-blur-md">
-          <h2 className="mb-8 text-center text-2xl font-bold text-white">Get Tickets</h2>
-
-          {buyBlockMessage && (
-            <div className="mb-4 rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
-              {buyBlockMessage}
-            </div>
-          )}
-
-          <div className="mb-8 text-center">
-            {earlyBirdActive ? (
-              <div className="flex flex-col items-center">
-                <span className="text-sm text-green-400 font-semibold mb-1 uppercase tracking-wider">
-                  Early Bird Active
-                </span>
-                <div className="text-4xl font-extrabold text-green-500">
-                  Rs {event.earlyBird.discountPrice}
-                </div>
-                <div className="text-lg line-through text-white/50 mt-1">
-                  Rs {event.price}
-                </div>
-              </div>
-            ) : (
-              <div className="text-4xl font-extrabold text-[#FFA500]">
-                Rs {event.price}
+            {buyBlockMessage && (
+              <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/70 leading-relaxed">
+                {buyBlockMessage}
               </div>
             )}
-          </div>
+
+            <div className="mb-6 text-center">
+              {earlyBirdActive ? (
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-green-400">
+                    Early Bird
+                  </span>
+                  <span className="text-4xl font-extrabold text-green-400">
+                    Rs {event.earlyBird.discountPrice}
+                  </span>
+                  <span className="text-base line-through text-white/40">
+                    Rs {event.price}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-4xl font-extrabold text-[#FFA500]">
+                  Rs {event.price}
+                </span>
+              )}
+            </div>
 
           <button
             onClick={handleBuyTicket}
@@ -318,30 +385,156 @@ function Event() {
             {event.remainingTickets > 0 && canBuy ? 'Buy Tickets' : 'Sold Out'}
           </button>
 
-          {/* Waitlist: show when user is effectively sold out */}
-          {!canBuy && user && (
-            <div className="mt-4">
-              {waitlistStatus === 'waiting' || waitlistStatus === 'notified' ? (
-                <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white/80">
-                  <div className="font-semibold text-white">You are on the waitlist</div>
-                </div>
+            {!canBuy && user && (
+              <div className="mt-4">
+                {waitlistStatus === 'waiting' || waitlistStatus === 'notified' ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/70">
+                    You are on the waitlist
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleJoinWaitlist}
+                    disabled={joiningWaitlist}
+                    className="w-full rounded-2xl border border-white/20 bg-white/5 py-3 px-6 text-sm font-semibold text-white hover:bg-white/10 transition disabled:opacity-50"
+                  >
+                    {joiningWaitlist ? 'Joining…' : 'Join Waitlist'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {event.remainingTickets > 0 && (
+              <p className="mt-4 text-center text-xs text-white/40">
+                {event.remainingTickets} ticket{event.remainingTickets === 1 ? '' : 's'} remaining
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ── ABOUT ── */}
+        <div className={`lg:col-span-2 ${cardBase} p-8`}>
+          <h3 className="mb-4 text-2xl font-bold text-white">About This Event</h3>
+          <p className="text-base leading-relaxed text-white/70">
+            {event.description || 'Join us for an unforgettable experience! This event promises to deliver amazing moments and create lasting memories.'}
+          </p>
+        </div>
+
+        {/* ── ORGANIZER ── */}
+        <div className={`lg:col-span-2 ${cardBase} overflow-hidden`}>
+          {/* header strip — uses the same glass style, accent with a subtle orange tint */}
+          <div className="relative flex items-center gap-5 p-6 md:p-8 border-b border-white/10">
+
+            {/* Avatar */}
+            <button
+              onClick={() => event.organizerId && router.push(`/organizer/${event.organizerId}`)}
+              className="h-20 w-20 flex-shrink-0 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-3xl font-bold text-[#FFA500] overflow-hidden hover:opacity-80 transition"
+            >
+              {organizer?.profilePicture ? (
+                <Image
+                  src={organizer.profilePicture}
+                  alt={organizer.name}
+                  width={80} height={80}
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <button
-                  onClick={handleJoinWaitlist}
-                  disabled={joiningWaitlist}
-                  className="btn-sm w-full disabled:opacity-60"
-                >
-                  {joiningWaitlist ? 'Joining waitlist...' : 'Join Waitlist'}
-                </button>
+                organizer?.name?.slice(0, 1)?.toUpperCase() || 'O'
               )}
+            </button>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs uppercase tracking-widest text-white/40 mb-1">Organizer</p>
+              <button
+                onClick={() => event.organizerId && router.push(`/organizer/${event.organizerId}`)}
+                className="text-xl font-bold text-black/80 hover:text-[#FFA500] transition truncate block"
+              >
+                {organizer?.name || 'Organizer'}
+              </button>
+              <p className="mt-1 text-sm text-white/50">
+                <span className="text-[#FFA500] font-semibold">{organizerRatingLabel}</span>
+                <span className="mx-2 text-white/20">·</span>
+                {organizer?.followersCount || 0} followers
+              </p>
+            </div>
+
+            {/* Follow button — only for other users */}
+            {user?.uid !== event.organizerId && (
+              <button
+                onClick={handleToggleOrganizerFollow}
+                disabled={organizerBusy}
+                className={`flex-shrink-0 rounded-xl px-5 py-2 text-sm font-semibold border transition disabled:opacity-50
+                  ${organizer?.isFollowing
+                    ? 'border-white/20 bg-white/5 text-white hover:bg-white/10'
+                    : 'border-[#FFA500] bg-[#FFA500]/10 text-[#FFA500] hover:bg-[#FFA500]/20'
+                  }`}
+              >
+                {organizerBusy ? 'Saving…' : organizer?.isFollowing ? 'Following' : 'Follow'}
+              </button>
+            )}
+          </div>
+
+          {/* Bio / extra info if available */}
+          {organizer?.bio && (
+            <p className="px-6 md:px-8 py-5 text-sm text-white/60 leading-relaxed">
+              {organizer.bio}
+            </p>
+          )}
+        </div>
+
+        {/* ── RATINGS ── */}
+        <div className={`lg:col-span-2 ${cardBase} p-8 min-h-[280px]`}>
+          <h3 className="mb-1 text-2xl font-bold text-white">Event Ratings</h3>
+          <p className="mb-6 text-sm text-white/50">
+            <span className="text-[#FFA500] font-semibold">{eventRatingLabel}</span>
+            {ratingSummary.ratingsCount > 0 && (
+              <span className="ml-2">
+                ({ratingSummary.ratingsCount} rating{ratingSummary.ratingsCount === 1 ? '' : 's'})
+              </span>
+            )}
+          </p>
+
+          {ratingSummary.canRate ? (
+            <div className="space-y-4">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setSelectedRating(star)}
+                    className={`text-3xl transition-transform hover:scale-110 bg-transparent border-none outline-none ${selectedRating >= star ? 'text-[#FFA500]' : 'text-white/20'}`}
+                    aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <textarea
+                defaultValue={ratingSummary.userRating?.comment || ''}
+                onChange={e => { ratingCommentRef.current = e.target.value; }}
+                maxLength={1000}
+                placeholder="Leave an optional comment…"
+                className="w-full h-[96px] rounded-2xl border border-white/15 bg-white/5 p-4 text-sm text-white placeholder-white/30 outline-none focus:ring-2 focus:ring-[#FFA500]/40 resize-none"
+              />
+              <button
+                onClick={handleSubmitRating}
+                disabled={submittingRating}
+                className="rounded-2xl bg-[#FFA500]/10 border border-[#FFA500]/30 text-[#FFA500] px-6 py-2.5 text-sm font-semibold hover:bg-[#FFA500]/20 transition disabled:opacity-50"
+              >
+                {submittingRating ? 'Saving…' : ratingSummary.userRating ? 'Update Rating' : 'Submit Rating'}
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/50 leading-relaxed">
+              {!user
+                  ? 'Login to rate this event.'
+                  : 'Only users who purchased a ticket can leave a rating'}
             </div>
           )}
         </div>
 
         {/* LOCATION */}
-        <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-8 shadow-lg border border-white/10">
+        <div className={`lg:col-span-2 ${cardBase} p-8`}>
           <h3 className="mb-6 text-2xl font-bold text-white">Event Location</h3>
-
           {event.latitude && event.longitude && (
             <EventMap
               latitude={event.latitude}
@@ -349,13 +542,12 @@ function Event() {
               title={event.event}
             />
           )}
-
           {googleMapsUrl && (
             <a
               href={googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn inline-block mt-6 w-auto no-underline"
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-[#FFA500]/30 bg-[#FFA500]/10 px-5 py-2.5 text-sm font-semibold text-[#FFA500] hover:bg-[#FFA500]/20 transition no-underline"
             >
               Open in Google Maps
             </a>
@@ -366,7 +558,7 @@ function Event() {
       {/* BUYING OVERLAY */}
       {isBuying && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xl">
-          <div className="text-white text-xl animate-pulse">Processing Ticket...</div>
+          <div className="text-white text-xl animate-pulse">Processing Ticket…</div>
         </div>
       )}
     </div>
