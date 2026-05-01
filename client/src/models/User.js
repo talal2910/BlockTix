@@ -15,6 +15,17 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    bio: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1000,
+    },
+    profilePicture: {
+        type: String,
+        default: '',
+        trim: true,
+    },
     role: {
         type: String,
         enum: ['user', 'organizer', 'admin'],
