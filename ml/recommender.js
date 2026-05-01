@@ -49,9 +49,6 @@ function dot(a, b) {
   return s;
 }
 
-// Normalise MF score to (0,1)
-function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
-
 // Location scoring
 /*
  Returns [0,1] — how well the user's saved city matches an event's city.
@@ -88,7 +85,7 @@ function mfCategoryScores(numericUserId, userCity) {
     const cat = eventCat[eid];
     if (!cat || ei === undefined) continue;
 
-    const cfScore  = sigmoid(dot(P[ui], Q[ei]));
+    const cfScore  = dot(P[ui], Q[ei]);
     const locScore = locationScore(userCity, eventCity?.[eid] || '');
     const score    = ALPHA * cfScore + BETA * locScore;
 
