@@ -4,12 +4,9 @@ import Ticket from "@/models/Ticket";
 import dbConnect from '@/lib/dbConnect';
 import { mintTicketNFT } from '@/lib/blockchain';
 import User from '@/models/User';
-<<<<<<< HEAD
+import { getStripe, fromStripeAmount } from '@/lib/stripe';
 import WaitlistEntry from '@/models/WaitlistEntry';
 import { fillNotifiedWaitlistSlots } from '@/lib/waitlist';
-=======
-import { getStripe, fromStripeAmount } from '@/lib/stripe';
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
 
 
 //route for creating tickets
@@ -89,10 +86,20 @@ export async function POST(req) {
     if (!event) {
       return new Response(JSON.stringify({ error: "Event not found" }), { status: 404 });
     }
-<<<<<<< HEAD
 
     rollbackEventObjectId = event._id;
 
+    // Validate payment amount against Stripe (from HEAD)
+    const paidAmount = fromStripeAmount(checkoutSession.amount_total || 0, checkoutSession.currency);
+    const stripeTicketPrice = Number(checkoutSession.metadata?.price);
+
+    if (!Number.isFinite(stripeTicketPrice) || Math.abs(paidAmount - stripeTicketPrice) > 0.01) {
+      return new Response(JSON.stringify({
+        error: "Payment amount could not be verified. Your ticket has not been created."
+      }), { status: 400 });
+    }
+
+    // Handle waitlist priority (from main)
     const hasWaitlist = await WaitlistEntry.exists({ eventId: event._id });
 
     // Priority mode: only `notified` users can purchase (FIFO promotion fills notified slots)
@@ -112,7 +119,7 @@ export async function POST(req) {
       consumedWaitlist = true;
     }
 
-    // Atomic decrement to prevent overselling
+    // Atomic decrement to prevent overselling (from main)
     const updatedEvent = await Event.findOneAndUpdate(
       { _id: event._id, remainingTickets: { $gt: 0 } },
       { $inc: { remainingTickets: -1 } },
@@ -126,6 +133,7 @@ export async function POST(req) {
 
     decrementedInventory = true;
 
+    // Determine ticket price with early bird support (from main)
     const now = new Date();
     let ticketPrice = updatedEvent.price; // default regular price
 
@@ -151,22 +159,6 @@ export async function POST(req) {
       if (ebClaim.modifiedCount > 0) {
         ticketPrice = eb.discountPrice;
       }
-=======
-
-    if (event.remainingTickets <= 0) {
-      return new Response(JSON.stringify({
-        error: "Tickets sold out. Payment was received, but no ticket was issued. Please contact support for a refund."
-      }), { status: 409 });
-    }
-
-    const paidAmount = fromStripeAmount(checkoutSession.amount_total || 0, checkoutSession.currency);
-    const ticketPrice = Number(checkoutSession.metadata?.price);
-
-    if (!Number.isFinite(ticketPrice) || Math.abs(paidAmount - ticketPrice) > 0.01) {
-      return new Response(JSON.stringify({
-        error: "Payment amount could not be verified. Your ticket has not been created."
-      }), { status: 400 });
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
     }
 
     const platformWallet = process.env.PLATFORM_CUSTODY_ADDRESS;
@@ -293,7 +285,7 @@ export async function POST(req) {
       throw saveError;
     }
 
-<<<<<<< HEAD
+    // Update any remaining waitlist entries for this user (from main)
     try {
       await WaitlistEntry.updateMany(
         { eventId: updatedEvent._id, userId, status: { $ne: 'purchased' } },
@@ -301,11 +293,6 @@ export async function POST(req) {
       );
     } catch (err) {
       console.warn('Failed to update waitlist status:', err);
-=======
-    event.remainingTickets -= 1;
-    if (checkoutSession.metadata?.earlyBirdActive === 'true' && event.earlyBird?.enabled) {
-      event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1;
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
     }
 
     // Remove from waitlist after purchase (requested behavior)

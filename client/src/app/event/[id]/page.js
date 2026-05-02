@@ -1,12 +1,8 @@
 //app/event/[id]/page.js
 'use client';
 
-<<<<<<< HEAD
-import React, { useCallback, useEffect, useState } from 'react';
-import Image from 'next/image';
-=======
 import React, { useCallback, useEffect, useRef, useState } from 'react';
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
+import Image from 'next/image';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
@@ -14,10 +10,7 @@ import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import Skeleton from '@/app/components/Skeleton';
 
-<<<<<<< HEAD
-=======
 // Fire-and-forget: must never throw or block the UI
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
 function recordInteraction(firebase_uid, event_id, interaction_type) {
   if (!firebase_uid || !event_id) return;
   fetch('/api/recommendations/record', {
@@ -27,20 +20,16 @@ function recordInteraction(firebase_uid, event_id, interaction_type) {
   }).catch(() => {});
 }
 
- const EventMap = dynamic(
-    () => import('@/app/components/EventMap'),
-    { ssr: false }
-  );
+const EventMap = dynamic(
+  () => import('@/app/components/EventMap'),
+  { ssr: false }
+);
 
 function Event() {
   const params = useParams();
   const router = useRouter();
-<<<<<<< HEAD
-  const id     = params.id;   // eventId UUID
-=======
   const id = params.id; // eventId UUID
   const checkoutFinalizedRef = useRef(false);
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
 
   const [event,      setEvent]      = useState(null);
   const [loading,    setLoading]    = useState(true);
@@ -63,14 +52,6 @@ function Event() {
 
   const { user } = useAuth();
 
-<<<<<<< HEAD
-=======
-  const EventMap = dynamic(
-    () => import('@/app/components/EventMap'),
-    { ssr: false }
-  );
-
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
   const fetchEvent = useCallback(async () => {
     try {
       const res  = await fetch(`/api/events/${id}`);
@@ -86,11 +67,7 @@ function Event() {
   // Fetch event on mount
   useEffect(() => {
     if (id) fetchEvent();
-<<<<<<< HEAD
-   }, [id, fetchEvent]);
-=======
   }, [id, fetchEvent]);
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
 
   useEffect(() => {
     if (!event?.organizerId) return;
@@ -249,7 +226,6 @@ function Event() {
     } finally {
       setOrganizerBusy(false);
     }
-<<<<<<< HEAD
   }
 
   async function handleSubmitRating() {
@@ -282,17 +258,7 @@ function Event() {
     if (!user) { toast.error('Login to buy tickets'); return; }
     try {
       setIsBuying(true);
-      const res  = await fetch('/api/tickets', {
-=======
-    if (!event || event.remainingTickets <= 0) {
-      toast.error('This event is sold out');
-      return;
-    }
-
-    try {
-      setIsBuying(true);
       const res = await fetch('/api/stripe/checkout', {
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify({
@@ -303,16 +269,9 @@ function Event() {
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || 'Something went wrong'); return; }
-<<<<<<< HEAD
-      toast.success('🎟️ Ticket purchased successfully!');
-      recordInteraction(user.uid, id, 'purchase');
-      fetchEvent();
-      refreshAvailability();
-=======
       if (!data.url) { toast.error('Unable to open Stripe Checkout'); return; }
 
       window.location.href = data.url;
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -434,19 +393,11 @@ function Event() {
     ? `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`
     : null;
 
-<<<<<<< HEAD
-  const eb              = event.earlyBird;
-  const now             = new Date();
-  const isTimeValid     = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
-  const isQuotaValid    = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
-  const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
-=======
   const eb           = event.earlyBird;
   const now          = new Date();
   const isTimeValid  = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
   const isQuotaValid = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
   const earlyBirdActive = eb?.enabled && isTimeValid && isQuotaValid;
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
 
   const organizerRatingLabel = organizer?.ratingsCount
     ? `${Number(organizer.averageRating || 0).toFixed(1)} / 5`
@@ -537,24 +488,14 @@ function Event() {
 
           <button
             onClick={handleBuyTicket}
-<<<<<<< HEAD
-            disabled={event.remainingTickets === 0 || !canBuy}
+            disabled={event.remainingTickets === 0 || !canBuy || isBuying}
             className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition cursor-pointer
-              ${event.remainingTickets > 0 && canBuy
-=======
-            disabled={event.remainingTickets === 0 || isBuying}
-            className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition cursor-pointer
-              ${event.remainingTickets > 0 && !isBuying
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
+              ${event.remainingTickets > 0 && canBuy && !isBuying
                 ? 'bg-gradient-to-r from-[#FFA500] to-indigo-600 text-white'
                 : 'bg-white/10 text-white/50 cursor-not-allowed'
               }`}
           >
-<<<<<<< HEAD
-            {event.remainingTickets > 0 && canBuy ? 'Buy Tickets' : 'Sold Out'}
-=======
             {event.remainingTickets === 0 ? 'Sold Out' : isBuying ? 'Preparing Checkout...' : 'Buy Tickets'}
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
           </button>
 
             {!canBuy && user && (
@@ -730,14 +671,10 @@ function Event() {
       {/* BUYING OVERLAY */}
       {isBuying && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xl">
-<<<<<<< HEAD
-          <div className="text-white text-xl animate-pulse">Processing Ticket…</div>
-=======
           <div className="rounded-2xl border border-white/10 bg-gray-950/90 px-8 py-6 text-center shadow-2xl">
             <div className="text-white text-xl font-semibold animate-pulse">Securing your ticket...</div>
             <p className="mt-2 text-sm text-white/60">Keep this page open while payment and ticket issuance finish.</p>
           </div>
->>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
         </div>
       )}
     </div>
