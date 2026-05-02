@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from "../../components/Skeleton";
+import TicketScannerPanel from "./TicketScannerPanel";
 import {
   BarChart,
   Bar,
@@ -59,6 +60,7 @@ function AdminTabs() {
     { key: "organizers", label: "Organizers" },
     { key: "approvals", label: "Approvals" },
     { key: "events", label: "Events" },
+    { key: "scanner", label: "Ticket Scanner" },
   ];
 
   const fetchUsersAgain = () => {
@@ -628,6 +630,10 @@ function AdminTabs() {
                 </div>
               </div>
             </div>
+          )}
+
+          {active === 'scanner' && (
+            <TicketScannerPanel adminId={user?.uid} />
           )}
         </section>
       </div>

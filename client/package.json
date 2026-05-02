@@ -10,6 +10,7 @@
     "test:recommender": "node scripts/testRecommender.js"
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
     "ethers": "^6.16.0",
     "firebase": "^12.0.0",
     "framer-motion": "^12.23.25",

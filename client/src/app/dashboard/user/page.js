@@ -252,6 +252,7 @@ export default function Dashboard() {
   // Ticket card component
   function TicketCard({ ticket }) {
     const event = ticket.eventId;
+    const isUsed = ticket?.status === 'used' || ticket?.isRedeemed === true;
     if (!event) return (
       <div className="border p-4 rounded-lg shadow-md text-red-600 dark:text-red-300 bg-black/5 dark:bg-white/10 backdrop-blur-md border-black/10 dark:border-white/10">
         Invalid Ticket Data
@@ -259,10 +260,15 @@ export default function Dashboard() {
     );
 
     return (
-      <div className="bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition w-full overflow-hidden relative">
+      <div className={`bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition w-full overflow-hidden relative ${isUsed ? 'opacity-60 grayscale' : ''}`}>
         {ticket.isForResale && (
           <div className="absolute top-3 right-3 bg-[#FFA500] text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow">
             Listed for Resale
+          </div>
+        )}
+        {isUsed && (
+          <div className="absolute top-3 left-3 bg-gray-900/85 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow border border-white/10">
+            Used
           </div>
         )}
         {ticket.custodial && !ticket.isForResale && (
@@ -288,6 +294,11 @@ export default function Dashboard() {
 
         <div className="p-4">
           <h3 className="text-xl font-bold text-white truncate">{event.event}</h3>
+          {isUsed && (
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-gray-300">
+              Already scanned and marked used
+            </p>
+          )}
           <p className="text-white/70">
             <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
           </p>
@@ -398,6 +409,7 @@ export default function Dashboard() {
     const ticket = selectedTicket;
     const event = ticket?.eventId;
     if (!ticket || !event) return null;
+    const isUsed = ticket?.status === 'used' || ticket?.isRedeemed === true;
 
     const contractAddress = getContractAddress(ticket);
     const royaltyBps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 0;
@@ -405,12 +417,17 @@ export default function Dashboard() {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md">
-        <div className="flex h-[calc(100vh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-950 text-white shadow-2xl">
+        <div className={`flex h-[calc(100vh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-950 text-white shadow-2xl ${isUsed ? 'opacity-70 grayscale' : ''}`}>
           <div className="shrink-0 flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 md:px-6">
             <div className="min-w-0">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <TicketStatus ticket={ticket} />
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/65">Sepolia ERC-721</span>
+                {isUsed && (
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 border border-white/10">
+                    Already scanned
+                  </span>
+                )}
               </div>
               <h2 className="truncate text-2xl font-bold">{event.event}</h2>
               <p className="mt-1 text-sm text-white/60">Ticket, QR access, blockchain details, and wallet import information.</p>
@@ -497,7 +514,16 @@ export default function Dashboard() {
             </div>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              {ticket.custodial ? (
+              {isUsed ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm font-medium text-white/80">
+                    This ticket has already been used and cannot be listed, claimed, or scanned again.
+                  </div>
+                  <div className="rounded-xl border border-green-400/20 bg-green-500/10 p-4 text-sm font-medium text-green-200">
+                    Status: Used in the database
+                  </div>
+                </div>
+              ) : ticket.custodial ? (
                 <div className="space-y-3">
                   {!ticket.isForResale && (
                     <button onClick={() => handleClaim(ticket.ticketId)} disabled={claiming} className="w-full rounded-xl bg-[#FFA500] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">

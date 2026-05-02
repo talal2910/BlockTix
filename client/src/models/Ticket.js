@@ -78,6 +78,16 @@ const ticketSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  redeemedAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
+  redeemedBy: {
+    type: String,
+    default: null,
+    index: true,
+  },
   qrData: {
     type: Object // Stores signed QR data and expiration
   },
