@@ -254,13 +254,13 @@ export default function Dashboard() {
     const event = ticket.eventId;
     const isUsed = ticket?.status === 'used' || ticket?.isRedeemed === true;
     if (!event) return (
-      <div className="border p-4 rounded-lg shadow-md text-red-600 dark:text-red-300 bg-black/5 dark:bg-white/10 backdrop-blur-md border-black/10 dark:border-white/10">
+      <div className="border p-4 rounded-xl text-red-300 bg-white/10 backdrop-blur-sm border-white/10">
         Invalid Ticket Data
       </div>
     );
 
     return (
-      <div className={`bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition w-full overflow-hidden relative ${isUsed ? 'opacity-60 grayscale' : ''}`}>
+      <div className={`bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition w-full overflow-hidden relative ${isUsed ? 'opacity-60 grayscale' : ''}`}>
         {ticket.isForResale && (
           <div className="absolute top-3 right-3 bg-[#FFA500] text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow">
             Listed for Resale
@@ -287,7 +287,7 @@ export default function Dashboard() {
             <Image src={event.image} alt="Event" fill sizes="360px" className="object-cover" />
           </div>
         ) : (
-          <div className="h-48 bg-black/5 dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-white/60 border-b border-black/10 dark:border-white/10">
+          <div className="h-48 bg-white/5 flex items-center justify-center text-white/50 border-b border-white/10">
             No Image
           </div>
         )}
@@ -295,11 +295,11 @@ export default function Dashboard() {
         <div className="p-4">
           <h3 className="text-xl font-bold text-white truncate">{event.event}</h3>
           {isUsed && (
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-white/50">
               Already scanned and marked used
             </p>
           )}
-          <p className="text-white/70">
+          <p className="text-white/70 mt-1">
             <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
           </p>
           <p className="text-white/70"><strong>Time:</strong> {event.time}</p>
@@ -321,19 +321,19 @@ export default function Dashboard() {
   // Wishlist event card
   function WishlistCard({ event }) {
     return (
-      <div className="bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition overflow-hidden">
+      <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-md hover:shadow-lg hover:shadow-[#FFA500]/20 transition overflow-hidden">
         {event.image ? (
           <div className="w-full h-40 overflow-hidden relative">
             <Image src={event.image} alt={event.event} fill sizes="360px" className="object-cover" />
           </div>
         ) : (
-          <div className="h-40 bg-black/5 dark:bg-white/5 flex items-center justify-center text-white/50">
+          <div className="h-40 bg-white/5 flex items-center justify-center text-white/50">
             No Image
           </div>
         )}
         <div className="p-4">
           <h3 className="text-lg font-bold text-white truncate">{event.event}</h3>
-          <p className="text-white/70 text-sm">
+          <p className="text-white/70 text-sm mt-1">
             {new Date(event.date).toLocaleDateString()}
           </p>
           <p className="text-white/70 text-sm">{event.location}</p>
@@ -577,58 +577,57 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <main className="min-h-screen px-6 py-8 bg-white/10 backdrop-blur-sm">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="max-w-7xl mx-auto mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">My Tickets</h1>
-          <p className="text-lg text-gray-700 dark:text-white/70 mt-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-white">My Tickets</h1>
+          <p className="text-lg text-white/70 mt-1">
             Manage your event tickets and saved events.
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="max-w-7xl mx-auto bg-black/5 dark:bg-white/10 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border border-black/10 dark:border-white/10">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        {/* ── Stats ── */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)
             ) : (
               <>
-                <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
-                  <p className="text-gray-700 dark:text-white/70">Total Tickets</p>
-                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">{tickets.length}</h3>
-                </div>
-                <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
-                  <p className="text-gray-700 dark:text-white/70">Upcoming</p>
-                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">{upcomingTickets.length}</h3>
-                </div>
-                <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
-                  <p className="text-gray-700 dark:text-white/70">Saved Events</p>
-                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">{savedEvents.length}</h3>
-                </div>
-                <div className="bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg p-6 flex flex-col items-center">
-                  <p className="text-gray-700 dark:text-white/70">Total Spent</p>
-                  <h3 className="text-3xl font-bold text-[#FFA500] mt-1">Rs {totalSpent}</h3>
-                </div>
+                {[
+                  { label: 'Total Tickets', value: tickets.length },
+                  { label: 'Upcoming',      value: upcomingTickets.length },
+                  { label: 'Saved Events',  value: savedEvents.length },
+                  { label: 'Total Spent',   value: `Rs ${totalSpent}` },
+                ].map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-5 flex flex-col items-center justify-center gap-1 shadow-sm"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/55">{label}</p>
+                    <h3 className="text-3xl font-bold text-[#FFA500]">{value}</h3>
+                  </div>
+                ))}
               </>
             )}
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="max-w-7xl mx-auto bg-black/5 dark:bg-white/10 backdrop-blur-md p-4 rounded-lg shadow-md mb-8 border border-black/10 dark:border-white/10">
-          <div className="flex w-full bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/10 p-1 rounded-full">
+        {/* ── Tabs ── */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="flex w-full bg-white/10 backdrop-blur-sm border border-white/10 p-1 rounded-full">
             {[
-              { key: 'upcoming', label: `Upcoming (${upcomingTickets.length})` },
-              { key: 'past',     label: `Past (${pastTickets.length})` },
-              { key: 'saved',    label: `Saved (${savedEvents.length})` },
+              { key: 'upcoming',      label: `Upcoming (${upcomingTickets.length})` },
+              { key: 'past',          label: `Past (${pastTickets.length})` },
+              { key: 'saved',         label: `Saved (${savedEvents.length})` },
               { key: 'notifications', label: `Notifications (${notifications.length})` },
             ].map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 text-center px-4 py-2 rounded-full font-semibold transition-all duration-300 ${
+                className={`flex-1 text-center px-3 sm:px-4 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 whitespace-nowrap ${
                   activeTab === tab.key
-                    ? 'bg-[#FFA500] text-white shadow-md'
-                    : 'bg-black/5 dark:bg-white/5 text-gray-700 dark:text-white/80 hover:bg-black/10 dark:hover:bg-white/10'
+                    ? 'bg-[#FFA500] text-white shadow-lg shadow-[#FFA500]/20'
+                    : 'bg-transparent text-white/55 hover:bg-white/5 hover:text-white/80'
                 }`}
               >
                 {tab.label}
@@ -637,15 +636,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Tab content */}
-        <div className="max-w-7xl mx-auto bg-black/5 dark:bg-white/10 backdrop-blur-md p-10 rounded-lg border border-black/10 dark:border-white/10">
+        {/* ── Tab Content ── */}
+        <div className="max-w-7xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 p-6">
 
           {/* Upcoming */}
           {activeTab === 'upcoming' && (
             loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="bg-white/10 rounded-lg p-6 h-64 border border-white/10">
+                  <div key={i} className="bg-white/10 rounded-xl p-6 h-64 border border-white/10">
                     <Skeleton className="h-40 w-full mb-4" />
                     <Skeleton variant="text" className="w-3/4 mb-2" />
                     <Skeleton variant="text" className="w-1/2" />
@@ -653,9 +652,9 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : upcomingTickets.length === 0 ? (
-              <div className="flex flex-col items-center py-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Upcoming Events</h3>
-                <p className="text-gray-700 dark:text-white/70 mb-5">
+              <div className="flex flex-col items-center py-16 text-center">
+                <h3 className="text-lg font-semibold text-white">No Upcoming Events</h3>
+                <p className="text-white/60 mb-5 mt-1">
                   You do not have any upcoming events. Discover new ones to attend!
                 </p>
                 <button onClick={() => router.push('/discover')} className="btn-sm">
@@ -672,9 +671,9 @@ export default function Dashboard() {
           {/* Past */}
           {activeTab === 'past' && (
             pastTickets.length === 0 ? (
-              <div className="flex flex-col items-center py-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Past Events</h3>
-                <p className="text-gray-700 dark:text-white/70">You have not attended any events yet.</p>
+              <div className="flex flex-col items-center py-16 text-center">
+                <h3 className="text-lg font-semibold text-white">No Past Events</h3>
+                <p className="text-white/60 mt-1">You have not attended any events yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -683,12 +682,12 @@ export default function Dashboard() {
             )
           )}
 
-          {/* Saved / Wishlist*/}
+          {/* Saved / Wishlist */}
           {activeTab === 'saved' && (
             wishlistLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="bg-white/10 rounded-lg p-6 h-64 border border-white/10">
+                  <div key={i} className="bg-white/10 rounded-xl p-6 h-64 border border-white/10">
                     <Skeleton className="h-40 w-full mb-4" />
                     <Skeleton variant="text" className="w-3/4 mb-2" />
                     <Skeleton variant="text" className="w-1/2" />
@@ -696,9 +695,9 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : savedEvents.length === 0 ? (
-              <div className="flex flex-col items-center py-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Saved Events</h3>
-                <p className="text-gray-700 dark:text-white/70 mb-5">
+              <div className="flex flex-col items-center py-16 text-center">
+                <h3 className="text-lg font-semibold text-white">No Saved Events</h3>
+                <p className="text-white/60 mt-1 mb-5">
                   Save events by clicking the button on any event page.
                 </p>
                 <button onClick={() => router.push('/discover')} className="btn-sm">
@@ -717,16 +716,16 @@ export default function Dashboard() {
             notifLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white/10 rounded-lg p-4 border border-white/10">
+                  <div key={i} className="bg-white/10 rounded-xl p-4 border border-white/10">
                     <Skeleton variant="text" className="w-3/4 mb-2" />
                     <Skeleton variant="text" className="w-1/2" />
                   </div>
                 ))}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center py-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Notifications</h3>
-                <p className="text-gray-700 dark:text-white/70">
+              <div className="flex flex-col items-center py-16 text-center">
+                <h3 className="text-lg font-semibold text-white">No Notifications</h3>
+                <p className="text-white/60 mt-1">
                   Waitlist and system updates will appear here.
                 </p>
               </div>
@@ -739,13 +738,13 @@ export default function Dashboard() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="font-semibold text-white">{n.type || 'notification'}</div>
-                      <div className="text-xs text-white/60 whitespace-nowrap">
+                      <div className="text-xs text-white/50 whitespace-nowrap">
                         {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
                       </div>
                     </div>
-                    <div className="mt-1 text-white/80">{n.message}</div>
+                    <div className="mt-1 text-white/75">{n.message}</div>
                     {n.reservedUntil && (
-                      <div className="mt-1 text-sm text-white/70">
+                      <div className="mt-1 text-sm text-white/60">
                         Reserved until {new Date(n.reservedUntil).toLocaleString()}
                       </div>
                     )}

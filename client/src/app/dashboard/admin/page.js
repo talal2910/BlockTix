@@ -179,60 +179,70 @@ function AdminTabs() {
     return { eventPerformance, userDistribution, totalTicketsSold, sellRate };
   }, [events, users, attendees, organizers]);
 
-  const cardClass = "bg-black/5 dark:bg-white/10 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow";
-  const panelClass = "bg-black/5 dark:bg-white/10 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-xl shadow-sm";
-  const panelHeaderClass = "bg-black/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10";
-  const mutedText = "text-gray-600 dark:text-white/60";
-  const mutedText2 = "text-gray-700 dark:text-white/70";
-  const strongText = "text-gray-900 dark:text-white";
+  // Use the project's glass design tokens to match other dashboard pages
+  const glassContainer = "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden";
+  const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
+  const glassContent = "bg-transparent";
+  const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg transition-shadow";
+  const glassPanel = "bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-sm";
+  const panelHeaderClass = "bg-white/5 border-b border-white/10";
+  const mutedText = "text-white/60";
+  const mutedText2 = "text-white/70";
+  const strongText = "text-white";
 
   if (loading) {
     return (
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Sidebar Skeleton */}
-        <aside className="lg:col-span-3">
-          <div className={`${panelClass} p-4 space-y-4`}>
-            <Skeleton variant="text" className="w-1/4 mb-4" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </aside>
-        {/* Content Skeleton */}
-        <section className="lg:col-span-9 space-y-6">
-          <Skeleton className="h-8 w-1/3 mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </section>
+      <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
+        </div>
+
+        <div className={`max-w-7xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[600px] p-6`}>
+          <aside className={`w-full md:w-72 flex-shrink-0 flex flex-col p-4 ${glassSidebar}`}>
+            <Skeleton className="h-8 w-3/4 mb-6" />
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </aside>
+
+          <main className={`flex-1 p-4 md:p-8 ${glassContent} space-y-6`}>
+            <Skeleton className="h-8 w-1/3" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sidebar */}
         <aside className="lg:col-span-3">
-          <div className={`${panelClass} p-4`}>
+          <div className={`${glassSidebar} p-4`}> 
             <p className={`text-xs uppercase font-bold tracking-wider ${mutedText} mb-3`}>Menu</p>
-            <nav className="space-y-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActive(tab.key)}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-medium rounded-lg transition-colors bg-black/5 dark:bg-white/10 ${strongText} border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/15`}>
-                  {tab.label}
-                </button>
-              ))}
+            <nav className="space-y-2">
+              {tabs.map((tab) => {
+                const isActive = active === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActive(tab.key)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive ? 'bg-[#FFA500] text-white shadow-lg' : 'bg-white/10 text-white/80 hover:bg-white/20'} border border-white/10`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </nav>
           </div>
         </aside>
@@ -246,22 +256,22 @@ function AdminTabs() {
 
               {/* Top Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <div className={cardClass}>
+                <div className={glassCard}>
                   <p className={`text-xs uppercase font-bold tracking-wider ${mutedText}`}>Total Users</p>
                   <p className={`text-3xl font-bold ${strongText} mt-2`}>{users.length}</p>
                   <div className="mt-2 text-xs text-green-600 font-medium">Active Accounts</div>
                 </div>
-                <div className={cardClass}>
+                <div className={glassCard}>
                   <p className={`text-xs uppercase font-bold tracking-wider ${mutedText}`}>Total Events</p>
                   <p className="text-3xl font-bold text-indigo-600 mt-2">{events.length}</p>
                   <div className="mt-2 text-xs text-indigo-600 font-medium">Currently Live</div>
                 </div>
-                <div className={cardClass}>
+                <div className={glassCard}>
                   <p className={`text-xs uppercase font-bold tracking-wider ${mutedText}`}>Tickets Sold</p>
                   <p className="text-3xl font-bold text-emerald-600 mt-2">{stats.totalTicketsSold}</p>
                   <div className="mt-2 text-xs text-emerald-600 font-medium">Confirmed Sales</div>
                 </div>
-                <div className={cardClass}>
+                <div className={glassCard}>
                   <p className={`text-xs uppercase font-bold tracking-wider ${mutedText}`}>Sell-out Rate</p>
                   <p className="text-3xl font-bold text-orange-600 mt-2">{stats.sellRate}%</p>
                   <div className="mt-2 text-xs text-orange-600 font-medium">Avg. Capacity Reached</div>
@@ -271,7 +281,7 @@ function AdminTabs() {
               {/* Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Chart 1: Sales Performance */}
-                <div className={`${panelClass} p-6`}>
+                <div className={`${glassPanel} p-6`}>
                   <h3 className={`text-lg font-bold ${strongText} mb-4`}>Ticket Sales per Event</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -280,7 +290,20 @@ function AdminTabs() {
                         <XAxis dataKey="name" hide /> {/* Hiding X labels if names are long */}
                         <YAxis />
                         <Tooltip
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-grey/80 backdrop-blur-sm border border-white/20 rounded-lg p-3 text-white text-sm">
+                                  <p className="font-bold text-[#FFA500] mb-1">{data.name}</p>
+                                  <p>Sold: <span className="font-semibold">{data.sold}</span></p>
+                                  <p>Remaining: <span className="font-semibold">{data.remaining}</span></p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                          cursor={{ fill: "rgba(255,255,255,0.04)" }}
                         />
                         <Legend />
                         <Bar dataKey="sold" name="Tickets Sold" fill="#8884d8" radius={[4, 4, 0, 0]} />
@@ -291,7 +314,7 @@ function AdminTabs() {
                 </div>
 
                 {/* Chart 2: User Demographics */}
-                <div className={`${panelClass} p-6`}>
+                <div className={`${glassPanel} p-6`}>
                   <h3 className={`text-lg font-bold ${strongText} mb-4`}>User Roles Distribution</h3>
                   <div className="h-64 flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
@@ -319,13 +342,13 @@ function AdminTabs() {
               </div>
 
               {/* Top Performing Table */}
-              <div className={`${panelClass} overflow-hidden`}>
+              <div className={`${glassPanel} overflow-hidden`}>
                 <div className={`px-6 py-4 ${panelHeaderClass}`}>
                   <h3 className={`font-semibold ${strongText}`}>Top Performing Events (by Sales)</h3>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className={`w-full text-left text-sm ${mutedText2}`}>
-                    <thead className={`bg-black/5 dark:bg-white/5 text-xs uppercase font-medium ${mutedText}`}>
+                  <table className="w-full text-left text-sm text-white/85">
+                    <thead className={`bg-white/5 text-xs uppercase font-medium ${mutedText}`}>
                       <tr>
                         <th className="px-6 py-3">Event Name</th>
                         <th className="px-6 py-3 text-center">Sold</th>
@@ -333,15 +356,15 @@ function AdminTabs() {
                         <th className="px-6 py-3 text-right">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/10 dark:divide-white/10">
+                    <tbody className="divide-y divide-white/10">
                       {stats.eventPerformance
                         .sort((a, b) => b.sold - a.sold)
                         .slice(0, 5)
                         .map((event, i) => (
-                          <tr key={i} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                          <tr key={i} className="hover:bg-white/5 transition-colors">
                             <td className={`px-6 py-4 font-medium ${strongText}`}>{event.name}</td>
-                            <td className="px-6 py-4 text-center">{event.sold}</td>
-                            <td className="px-6 py-4 text-center">{event.total}</td>
+                            <td className="px-6 py-4 text-center font-semibold text-white">{event.sold}</td>
+                            <td className="px-6 py-4 text-center font-semibold text-white">{event.total}</td>
                             <td className="px-6 py-4 text-right">
                               {event.remaining === 0 ? (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-200 border border-red-400/20">
@@ -381,7 +404,7 @@ function AdminTabs() {
                 }
 
                 return (
-                  <div className={`${panelClass} overflow-hidden`}>
+                  <div className={`${glassPanel} overflow-hidden`}>
                     <div className={`px-6 py-4 ${panelHeaderClass}`}>
                       <h3 className={`font-semibold ${strongText}`}>
                         {active === 'users' ? 'Attendees' : 'Organizers'}
@@ -390,7 +413,7 @@ function AdminTabs() {
 
                     <div className="overflow-x-auto">
                       <table className={`w-full text-left text-sm ${mutedText2}`}>
-                        <thead className={`bg-black/5 dark:bg-white/5 text-xs uppercase font-medium ${mutedText}`}>
+                        <thead className={`bg-white/5 text-xs uppercase font-medium ${mutedText}`}>
                           <tr>
                             <th className="px-6 py-3">Name</th>
                             <th className="px-6 py-3">Email</th>
@@ -407,9 +430,9 @@ function AdminTabs() {
                           </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-black/10 dark:divide-white/10">
+                        <tbody className="divide-y divide-white/10">
                           {rows.map((u) => (
-                            <tr key={u._id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                            <tr key={u._id} className="hover:bg-white/5 transition-colors">
                               <td className={`px-6 py-4 font-medium ${strongText} whitespace-nowrap`}>
                                 {u.name}
                               </td>
@@ -417,7 +440,7 @@ function AdminTabs() {
                                 <div className="truncate max-w-[260px]">{u.email}</div>
                               </td>
                               <td className="px-6 py-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-black/5 dark:bg-white/10 text-gray-700 dark:text-white/80 border border-black/10 dark:border-white/10">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/80 border border-white/10">
                                   {u.role}
                                 </span>
                               </td>
@@ -486,7 +509,7 @@ function AdminTabs() {
                     const availability = ((event.totalTickets - event.remainingTickets) / event.totalTickets) * 100;
 
                     return (
-                      <div key={event._id} className={cardClass}>
+                      <div key={event._id} className={glassCard}>
                         <h3 className={`font-bold ${strongText} text-lg mb-3 line-clamp-1`}>{event.event}</h3>
 
                         <div className="mb-4">
@@ -494,7 +517,7 @@ function AdminTabs() {
                             <span>Tickets</span>
                             <span>{event.remainingTickets} left</span>
                           </div>
-                          <div className="w-full bg-black/5 dark:bg-white/10 rounded-full h-2">
+                          <div className="w-full bg-white/10 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full ${soldOut ? "bg-red-500" : availability > 80 ? "bg-orange-500" : "bg-green-500"
                                 }`}
@@ -515,7 +538,7 @@ function AdminTabs() {
                           </button>
                           <button
                             onClick={() => deleteEvent(event._id)}
-                            className="px-3 py-2 text-gray-500 dark:text-white/60 hover:text-red-600 dark:hover:text-red-200 transition-colors"
+                            className="p-2 rounded-lg bg-red-400 text-white hover:bg-red-600 hover:scale-105 transition duration-200 shadow-sm"
                           >
                             🗑️
                           </button>
@@ -538,19 +561,19 @@ function AdminTabs() {
                 </div>
                 <button
                   onClick={fetchPendingEventsAgain}
-                  className="px-4 py-2 text-sm font-medium bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg hover:bg-black/10 dark:hover:bg-white/15 transition-colors text-gray-700 dark:text-white/80"
+                  className="px-4 py-2 text-sm font-medium bg-white/10 border border-white/10 rounded-lg hover:bg-white/20 transition-colors text-white/80"
                 >
                   Refresh
                 </button>
               </div>
 
-              <div className={`${panelClass} overflow-hidden`}>
+              <div className={`${glassPanel} overflow-hidden`}>
                 <div className={`px-6 py-4 ${panelHeaderClass}`}>
                   <h3 className={`font-semibold ${strongText}`}>Pending Requests</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className={`w-full text-left text-sm ${mutedText2}`}>
-                    <thead className={`bg-black/5 dark:bg-white/5 text-xs uppercase font-medium ${mutedText}`}>
+                    <thead className={`bg_white/5 text-xs uppercase font-medium ${mutedText}`}>
                       <tr>
                         <th className="px-6 py-3">Event</th>
                         <th className="px-6 py-3">Organizer</th>
@@ -563,7 +586,7 @@ function AdminTabs() {
                         <th className="px-6 py-3 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/10 dark:divide-white/10">
+                    <tbody className="divide-y divide-white/10">
                       {loadingPending ? (
                         <tr>
                           <td colSpan={9} className={`px-6 py-10 text-center ${mutedText}`}>
@@ -582,7 +605,7 @@ function AdminTabs() {
                           const orgEmail = e.organizer?.email || '';
                           const submitted = e.submittedAt || e.createdAt;
                           return (
-                            <tr key={e._id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                            <tr key={e._id} className="hover:bg-white/5 transition-colors">
                               <td className="px-6 py-4">
                                 <div className={`font-medium ${strongText}`}>{e.event}</div>
                                 <div className={`text-xs ${mutedText}`}>ID: {e.eventId}</div>
@@ -644,19 +667,25 @@ function AdminTabs() {
 export default function AdminDashboard() {
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mb-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-              <p className="text-gray-700 dark:text-white/70 mt-1">Manage users, organizers, and events</p>
+      <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10 p-6 md:p-8"> 
+          <header className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
+                <p className="text-white/70 mt-1">Manage users, organizers, and events</p>
+              </div>
             </div>
+          </header>
 
-          </div>
-        </header>
-
-        <AdminTabs />
+          <AdminTabs />
+        </div>
       </div>
     </ProtectedRoute>
   );
