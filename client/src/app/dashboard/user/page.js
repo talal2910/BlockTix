@@ -1,6 +1,7 @@
+// app/dashboard/user/page.js
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
@@ -19,13 +20,42 @@ export default function Dashboard() {
   const [notifLoading,   setNotifLoading]   = useState(true);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [qrToken,        setQrToken]        = useState('');
+  const [qrLoading,      setQrLoading]      = useState(false);
   const [showQrModal,    setShowQrModal]    = useState(false);
   const [claiming,       setClaiming]       = useState(false);
   const [reselling,      setReselling]      = useState(false);
   const [delisting,      setDelisting]      = useState(false);
-
   const { user } = useAuth();
   const router   = useRouter();
+
+  const copyToClipboard = async (value, label) => {
+    if (!value) {
+      toast.error(`${label} is not available yet`);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(String(value));
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Could not copy ${label.toLowerCase()}`);
+    }
+  };
+
+  const getContractAddress = useCallback((ticket) => (
+    ticket?.contractAddress || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ''
+  ), []);
+
+  const openTicketModal = useCallback((ticket) => {
+    setSelectedTicket(ticket);
+    setQrToken('');
+    setShowQrModal(true);
+  }, []);
+
+  const closeTicketModal = useCallback(() => {
+    setShowQrModal(false);
+    setQrToken('');
+  }, []);
 
   // Fetch tickets
   useEffect(() => {
@@ -94,24 +124,29 @@ export default function Dashboard() {
   }
 
   // QR code rotation
-  const fetchQrCode = async (ticketId) => {
+  const fetchQrCode = useCallback(async (ticketId, { showLoading = false } = {}) => {
     try {
+      if (showLoading) setQrLoading(true);
       const res  = await fetch(`/api/tickets/${ticketId}/qr`);
       const data = await res.json();
       if (data.qrCode) setQrToken(data.qrCode);
     } catch (error) {
       console.error('Error fetching QR:', error);
+    } finally {
+      if (showLoading) setQrLoading(false);
     }
-  };
+  }, []);
+
+  const selectedTicketId = selectedTicket?.ticketId;
 
   useEffect(() => {
     let interval;
-    if (showQrModal && selectedTicket) {
-      fetchQrCode(selectedTicket.ticketId);
-      interval = setInterval(() => fetchQrCode(selectedTicket.ticketId), 45000);
+    if (showQrModal && selectedTicketId) {
+      fetchQrCode(selectedTicketId, { showLoading: true });
+      interval = setInterval(() => fetchQrCode(selectedTicketId), 45000);
     }
     return () => clearInterval(interval);
-  }, [showQrModal, selectedTicket]);
+  }, [showQrModal, selectedTicketId, fetchQrCode]);
 
   // Claim / resale / delist
   const handleClaim = async (ticketId) => {
@@ -169,6 +204,19 @@ export default function Dashboard() {
     finally { setReselling(false); }
   };
 
+  const promptForResalePrice = (ticketId) => {
+    const price = prompt('Enter resale price (Rs):');
+    const parsedPrice = parseFloat(price);
+
+    if (!price) return;
+    if (Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+
+    handleResale(ticketId, parsedPrice);
+  };
+
   const handleDelist = async (ticketId) => {
     if (!user) return;
     try {
@@ -188,10 +236,18 @@ export default function Dashboard() {
   };
 
   // Derived data
-  const now             = new Date();
-  const upcomingTickets = tickets.filter(t => t.eventId?.date && new Date(t.eventId.date) >= now);
-  const pastTickets     = tickets.filter(t => t.eventId?.date && new Date(t.eventId.date) < now);
-  const totalSpent      = tickets.reduce((sum, t) => sum + (t.eventId?.price || 0), 0);
+  const ticketStats = useMemo(() => {
+    const now = new Date();
+    const upcoming = tickets.filter(t => t.eventId?.date && new Date(t.eventId.date) >= now);
+    const past = tickets.filter(t => t.eventId?.date && new Date(t.eventId.date) < now);
+    const spent = tickets.reduce((sum, t) => sum + (t.eventId?.price || 0), 0);
+
+    return { upcoming, past, spent };
+  }, [tickets]);
+
+  const upcomingTickets = ticketStats.upcoming;
+  const pastTickets     = ticketStats.past;
+  const totalSpent      = ticketStats.spent;
 
   // Ticket card component
   function TicketCard({ ticket }) {
@@ -241,7 +297,7 @@ export default function Dashboard() {
             <p className="text-[#FFA500] font-medium text-sm">Resale: Rs {ticket.resalePrice}</p>
           )}
           <button
-            onClick={() => { setSelectedTicket(ticket); setShowQrModal(true); }}
+            onClick={() => openTicketModal(ticket)}
             className="btn-sm w-full mt-4"
           >
             {ticket.isForResale ? 'Manage Listing' : 'View Ticket / QR'}
@@ -285,6 +341,206 @@ export default function Dashboard() {
             >
               Remove
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function InfoTile({ label, value, className = '' }) {
+    return (
+      <div className={`rounded-2xl border border-white/10 bg-white/5 p-4 ${className}`}>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-white/55">{label}</div>
+        <div className="mt-1 text-sm font-semibold text-white break-words">{value || '-'}</div>
+      </div>
+    );
+  }
+
+  function CopyField({ label, value, copyLabel = label, helper }) {
+    const hasValue = value !== null && value !== undefined && value !== '';
+
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-white/55">{label}</div>
+            {helper && <div className="mt-1 text-xs leading-relaxed text-white/55">{helper}</div>}
+          </div>
+          <button
+            type="button"
+            onClick={() => copyToClipboard(value, copyLabel)}
+            disabled={!hasValue}
+            className="shrink-0 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Copy
+          </button>
+        </div>
+        <div className="mt-3 rounded-xl bg-black/20 px-3 py-2 font-mono text-xs leading-relaxed text-white/85 break-all">
+          {hasValue ? value : 'Not available'}
+        </div>
+      </div>
+    );
+  }
+
+  function TicketStatus({ ticket }) {
+    if (ticket.isForResale) {
+      return <span className="rounded-full bg-[#FFA500]/20 px-3 py-1 text-xs font-semibold text-[#FFA500]">Listed for resale</span>;
+    }
+
+    if (ticket.custodial) {
+      return <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/75">Platform custody</span>;
+    }
+
+    return <span className="rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-200">In wallet</span>;
+  }
+
+  function TicketModal() {
+    const ticket = selectedTicket;
+    const event = ticket?.eventId;
+    if (!ticket || !event) return null;
+
+    const contractAddress = getContractAddress(ticket);
+    const royaltyBps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 0;
+    const royaltyPercent = `${Math.max(0, Math.min(1000, royaltyBps)) / 100}%`;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md">
+        <div className="flex h-[calc(100vh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-950 text-white shadow-2xl">
+          <div className="shrink-0 flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 md:px-6">
+            <div className="min-w-0">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <TicketStatus ticket={ticket} />
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/65">Sepolia ERC-721</span>
+              </div>
+              <h2 className="truncate text-2xl font-bold">{event.event}</h2>
+              <p className="mt-1 text-sm text-white/60">Ticket, QR access, blockchain details, and wallet import information.</p>
+            </div>
+            <button
+              type="button"
+              onClick={closeTicketModal}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 md:p-6">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+              <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+                <div className="relative h-56 w-full bg-white/5">
+                  {event.image ? (
+                    <Image
+                      src={event.image}
+                      alt={event.event || 'Event'}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 700px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-white/50">No event image</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#FFA500]">BlockTix Ticket</div>
+                    <div className="mt-1 line-clamp-2 text-3xl font-black leading-tight text-white">{event.event}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-5 p-5">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <InfoTile label="Date" value={event.date ? new Date(event.date).toLocaleDateString() : '-'} />
+                    <InfoTile label="Time" value={event.time || '-'} />
+                    <InfoTile label="Location" value={event.location || '-'} className="sm:col-span-2" />
+                    <InfoTile label="Ticket ID" value={ticket.ticketId} />
+                    <InfoTile label="Token ID" value={ticket.tokenId ?? 'Not minted yet'} />
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="text-sm font-bold text-white">Import in MetaMask</div>
+                    <p className="mt-1 text-sm leading-relaxed text-white/60">
+                      Open MetaMask, switch to Sepolia, go to NFTs, choose Import NFT, then paste the contract address and token ID below.
+                    </p>
+                    <div className="mt-4 grid grid-cols-1 gap-3">
+                      <CopyField label="Contract Address" value={contractAddress} copyLabel="Contract address" />
+                      <CopyField label="Token ID" value={ticket.tokenId} copyLabel="Token ID" />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <aside className="space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-white/55">Entry QR</div>
+                  <div className="mt-3 flex aspect-square items-center justify-center rounded-2xl border border-white/10 bg-white p-4">
+                    {qrToken ? (
+                      <QRCodeCanvas value={qrToken} size={190} />
+                    ) : (
+                      <div className="flex h-[190px] w-[190px] items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-500">
+                        {qrLoading ? 'Generating QR...' : 'QR unavailable'}
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-3 text-xs leading-relaxed text-white/55">The QR refreshes automatically. Keep this screen open at entry.</p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="text-sm font-bold">Blockchain Summary</div>
+                  <div className="mt-4 space-y-3 text-xs">
+                    <CopyField label="Mint Tx" value={ticket.txHash} copyLabel="Mint transaction" />
+                    <InfoTile label="Royalty" value={royaltyPercent} />
+                    {ticket.royaltyReceiverWallet && (
+                      <CopyField label="Royalty Receiver" value={ticket.royaltyReceiverWallet} copyLabel="Royalty receiver" />
+                    )}
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              {ticket.custodial ? (
+                <div className="space-y-3">
+                  {!ticket.isForResale && (
+                    <button onClick={() => handleClaim(ticket.ticketId)} disabled={claiming} className="w-full rounded-xl bg-[#FFA500] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">
+                      {claiming ? 'Transferring...' : 'Claim to My MetaMask'}
+                    </button>
+                  )}
+                  {!ticket.isForResale && (
+                    <button
+                      onClick={() => promptForResalePrice(ticket.ticketId)}
+                      disabled={reselling}
+                      className="w-full rounded-xl border border-[#FFA500]/30 bg-white/5 px-4 py-3 text-sm font-semibold text-[#FFA500] transition hover:bg-white/10 disabled:opacity-50"
+                    >
+                      {reselling ? 'Listing...' : 'List for Resale'}
+                    </button>
+                  )}
+                  {ticket.isForResale && (
+                    <>
+                      <div className="rounded-xl border border-[#FFA500]/20 bg-[#FFA500]/10 p-4 text-sm font-medium text-[#FFA500]">
+                        Listed for resale at Rs {ticket.resalePrice}
+                      </div>
+                      <button onClick={() => handleDelist(ticket.ticketId)} disabled={delisting} className="w-full rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:opacity-50">
+                        {delisting ? 'Removing...' : 'Cancel Listing'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-green-400/20 bg-green-500/10 p-4 text-sm font-medium text-green-200">
+                    This ticket is currently in your private wallet.
+                  </div>
+                  {!ticket.isForResale && (
+                    <button
+                      onClick={() => promptForResalePrice(ticket.ticketId)}
+                      disabled={reselling}
+                      className="w-full rounded-xl border border-[#FFA500]/30 bg-white/5 px-4 py-3 text-sm font-semibold text-[#FFA500] transition hover:bg-white/10 disabled:opacity-50"
+                    >
+                      {reselling ? 'Listing...' : 'List for Resale'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -482,162 +738,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* QR & Management Modal — identical to original */}
-        {showQrModal && selectedTicket && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900/80 border border-white/10 text-white rounded-3xl shadow-2xl max-w-3xl w-full p-6 md:p-8 relative overflow-hidden backdrop-blur-xl">
-              <button onClick={() => setShowQrModal(false)} className="absolute top-4 right-4 text-black hover:text-grey p-2">✕</button>
-
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-white mb-4">{selectedTicket.eventId?.event}</h2>
-
-                <div className="w-full flex flex-col md:flex-row rounded-3xl overflow-hidden border border-white/10 shadow-inner bg-white/5 mb-6">
-                  <div className="flex-1">
-                    <div className="relative h-44 md:h-56 w-full">
-                      {selectedTicket.eventId?.image ? (
-                        <Image src={selectedTicket.eventId.image} alt={selectedTicket.eventId?.event || 'Event'} fill sizes="(max-width: 768px) 100vw, 70vw" className="object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#FFA500]/20 to-indigo-100" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
-                      <div className="absolute bottom-4 left-4 right-4 text-left">
-                        <div className="text-white font-extrabold tracking-wide text-2xl md:text-3xl leading-tight">EVENT TICKET</div>
-                        <div className="text-white/90 text-sm mt-1 line-clamp-1">{selectedTicket.eventId?.event}</div>
-                      </div>
-                    </div>
-
-                    <div className="p-5 text-left">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                          <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Date</div>
-                          <div className="text-white font-bold">{selectedTicket.eventId?.date ? new Date(selectedTicket.eventId.date).toLocaleDateString() : '—'}</div>
-                        </div>
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                          <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Time</div>
-                          <div className="text-white font-bold">{selectedTicket.eventId?.time || '—'}</div>
-                        </div>
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10 sm:col-span-2">
-                          <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Location</div>
-                          <div className="text-white font-bold line-clamp-1">{selectedTicket.eventId?.location || '—'}</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                          <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Ticket Id</div>
-                          <div className="text-white font-mono text-xs break-all">{selectedTicket.ticketId}</div>
-                        </div>
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                          <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Token Id</div>
-                          <div className="text-white font-bold">{selectedTicket.tokenId ?? '—'}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="w-full md:w-64 bg-white/5 border-t md:border-t-0 md:border-l border-white/10 p-5 flex flex-col justify-between">
-                    <div className="text-left">
-                      <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Entry QR (rotates)</div>
-                      <div className="mt-3 bg-white/5 rounded-2xl border border-white/10 shadow-sm p-3 flex items-center justify-center">
-                        {qrToken ? (
-                          <QRCodeCanvas value={qrToken} size={140} />
-                        ) : (
-                          <div className="w-[140px] h-[140px] flex items-center justify-center text-white/60 text-sm">Generating...</div>
-                        )}
-                      </div>
-                      <div className="mt-3 text-xs text-white/60">⚠️ QR rotates every 60 seconds. Do not screenshot.</div>
-                    </div>
-
-                    <div className="mt-5">
-                      <div className="h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex">
-                        {Array.from({ length: 36 }).map((_, i) => (
-                          <div key={i} className={`h-full ${i % 3 === 0 ? 'w-[3px]' : 'w-[2px]'} ${i % 4 === 0 ? 'bg-white/70' : 'bg-white/20'}`} />
-                        ))}
-                      </div>
-                      <div className="mt-3 space-y-2 text-left text-xs">
-                        <div>
-                          <div className="text-white/60">Royalty</div>
-                          <div className="font-semibold text-white">
-                            {(() => { const bps = typeof selectedTicket.royaltyBps === 'number' ? selectedTicket.royaltyBps : 0; return `${Math.max(0, Math.min(1000, bps)) / 100}%`; })()}
-                          </div>
-                        </div>
-                        {selectedTicket.royaltyReceiverWallet && (
-                          <div>
-                            <div className="text-white/60">Receiver</div>
-                            <div className="font-mono break-all text-[11px] text-white/80">{selectedTicket.royaltyReceiverWallet}</div>
-                          </div>
-                        )}
-                        <div>
-                          <div className="text-white/60">Mint Tx</div>
-                          <div className="font-mono break-all text-[11px] text-white/80">{selectedTicket.txHash || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-white/60">Claim Tx</div>
-                          <div className="font-mono break-all text-[11px] text-white/80">{selectedTicket.claimTxHash || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-white/60">Last On-Chain Tx</div>
-                          <div className="font-mono break-all text-[11px] text-white/80">{selectedTicket.lastOnChainTxHash || '—'}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {selectedTicket.custodial ? (
-                    <>
-                      {!selectedTicket.isForResale && (
-                        <button onClick={() => handleClaim(selectedTicket.ticketId)} disabled={claiming} className="w-full py-2.5 text-sm bg-[#FFA500] text-white rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50">
-                          {claiming ? 'Transferring...' : 'Claim to My MetaMask'}
-                        </button>
-                      )}
-                      {!selectedTicket.isForResale && (
-                        <button
-                          onClick={() => { const p = prompt('Enter resale price (Rs):'); if (p && !isNaN(parseFloat(p)) && parseFloat(p) > 0) { handleResale(selectedTicket.ticketId, p); } else if (p) { toast.error('Please enter a valid price'); } }}
-                          disabled={reselling}
-                          className="w-full py-2.5 text-sm bg-white/10 border border-[#FFA500]/30 text-[#FFA500]/80 rounded-lg font-semibold hover:bg-white/15 transition disabled:opacity-50"
-                        >
-                          {reselling ? 'Listing...' : 'List for Resale'}
-                        </button>
-                      )}
-                      {selectedTicket.isForResale && (
-                        <>
-                          <div className="p-4 bg-[#FFA500]/10 text-[#FFA500]/90 rounded-xl text-sm font-medium border border-[#FFA500]/20">✓ Listed for resale at Rs {selectedTicket.resalePrice}</div>
-                          <button onClick={() => handleDelist(selectedTicket.ticketId)} disabled={delisting} className="w-full py-2.5 text-sm bg-red-500/10 border border-red-400/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/15 transition disabled:opacity-50">
-                            {delisting ? 'Removing...' : 'Cancel Listing & Remove from Marketplace'}
-                          </button>
-                          <p className="text-xs text-white/60 text-center">After cancelling, you can claim the ticket back to your wallet.</p>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-4 bg-green-500/10 text-green-200 rounded-xl text-sm font-medium border border-green-400/20 mb-3">✓ This ticket is in your private wallet</div>
-                      {!selectedTicket.isForResale && (
-                        <button
-                          onClick={() => { const p = prompt('Enter resale price (Rs):'); if (p && !isNaN(parseFloat(p)) && parseFloat(p) > 0) { handleResale(selectedTicket.ticketId, p); } else if (p) { toast.error('Please enter a valid price'); } }}
-                          disabled={reselling}
-                          className="w-full py-2.5 text-sm bg-white/10 border border-[#FFA500]/30 text-[#FFA500]/80 rounded-lg font-semibold hover:bg-white/15 transition disabled:opacity-50"
-                        >
-                          {reselling ? 'Listing (returning to platform custody)...' : 'List for Resale'}
-                        </button>
-                      )}
-                      {selectedTicket.isForResale && (
-                        <>
-                          <div className="p-4 bg-[#FFA500]/10 text-[#FFA500]/90 rounded-xl text-sm font-medium border border-[#FFA500]/20">✓ Listed for resale at Rs {selectedTicket.resalePrice}</div>
-                          <button onClick={() => handleDelist(selectedTicket.ticketId)} disabled={delisting} className="w-full py-2.5 text-sm bg-red-500/10 border border-red-400/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/15 transition disabled:opacity-50">
-                            {delisting ? 'Removing...' : 'Cancel Listing & Remove from Marketplace'}
-                          </button>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {showQrModal && selectedTicket && <TicketModal />}
       </main>
     </ProtectedRoute>
   );

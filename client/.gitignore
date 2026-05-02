@@ -13,6 +13,8 @@
 # testing
 /coverage
 
+*.exe
+
 # next.js
 /.next/
 /out/

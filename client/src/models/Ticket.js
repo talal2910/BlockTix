@@ -97,6 +97,34 @@ const ticketSchema = new mongoose.Schema({
     type: Number,
     // Store original purchase price for reference
   },
+  paymentProvider: {
+    type: String,
+    enum: ["stripe"],
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["paid", "refunded", "failed"],
+  },
+  stripeCheckoutSessionId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true,
+  },
+  stripePaymentIntentId: {
+    type: String,
+    sparse: true,
+    index: true,
+  },
+  amountPaid: {
+    type: Number,
+    min: 0,
+  },
+  paymentCurrency: {
+    type: String,
+    trim: true,
+    lowercase: true,
+  },
   listedBy: {
     type: String,
     // Track who listed the ticket (userId of the seller)

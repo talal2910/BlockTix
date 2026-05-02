@@ -4,8 +4,12 @@ import Ticket from "@/models/Ticket";
 import dbConnect from '@/lib/dbConnect';
 import { mintTicketNFT } from '@/lib/blockchain';
 import User from '@/models/User';
+<<<<<<< HEAD
 import WaitlistEntry from '@/models/WaitlistEntry';
 import { fillNotifiedWaitlistSlots } from '@/lib/waitlist';
+=======
+import { getStripe, fromStripeAmount } from '@/lib/stripe';
+>>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
 
 
 //route for creating tickets
@@ -43,8 +47,41 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    const { eventId, userId } = await req.json();
+    const { eventId, userId, stripeSessionId } = await req.json();
 
+    if (!eventId || !userId || !stripeSessionId) {
+      return new Response(JSON.stringify({
+        error: "A completed Stripe payment is required before a ticket can be issued."
+      }), { status: 400 });
+    }
+
+    const existingPaidTicket = await Ticket.findOne({ stripeCheckoutSessionId: stripeSessionId });
+    if (existingPaidTicket) {
+      return new Response(JSON.stringify({ success: true, ticket: existingPaidTicket, alreadyProcessed: true }), { status: 200 });
+    }
+
+    const stripe = getStripe();
+    const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+      expand: ['payment_intent'],
+    });
+
+    if (checkoutSession.payment_status !== 'paid') {
+      return new Response(JSON.stringify({
+        error: "Payment was not completed. Your ticket has not been created."
+      }), { status: 402 });
+    }
+
+    if (checkoutSession.metadata?.userId !== userId) {
+      return new Response(JSON.stringify({
+        error: "This payment session does not belong to the current user."
+      }), { status: 403 });
+    }
+
+    if (checkoutSession.metadata?.eventId !== String(eventId)) {
+      return new Response(JSON.stringify({
+        error: "This payment session does not match the selected event."
+      }), { status: 400 });
+    }
 
     rollbackUserId = userId;
 
@@ -52,6 +89,7 @@ export async function POST(req) {
     if (!event) {
       return new Response(JSON.stringify({ error: "Event not found" }), { status: 404 });
     }
+<<<<<<< HEAD
 
     rollbackEventObjectId = event._id;
 
@@ -113,6 +151,22 @@ export async function POST(req) {
       if (ebClaim.modifiedCount > 0) {
         ticketPrice = eb.discountPrice;
       }
+=======
+
+    if (event.remainingTickets <= 0) {
+      return new Response(JSON.stringify({
+        error: "Tickets sold out. Payment was received, but no ticket was issued. Please contact support for a refund."
+      }), { status: 409 });
+    }
+
+    const paidAmount = fromStripeAmount(checkoutSession.amount_total || 0, checkoutSession.currency);
+    const ticketPrice = Number(checkoutSession.metadata?.price);
+
+    if (!Number.isFinite(ticketPrice) || Math.abs(paidAmount - ticketPrice) > 0.01) {
+      return new Response(JSON.stringify({
+        error: "Payment amount could not be verified. Your ticket has not been created."
+      }), { status: 400 });
+>>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
     }
 
     const platformWallet = process.env.PLATFORM_CUSTODY_ADDRESS;
@@ -188,7 +242,15 @@ export async function POST(req) {
       originalOrganizerId: updatedEvent.organizerId,
       originalPurchasePrice: ticketPrice,
       royaltyBps,
-      royaltyReceiverWallet: organizerWalletAddress
+      royaltyReceiverWallet: organizerWalletAddress,
+      paymentProvider: "stripe",
+      paymentStatus: "paid",
+      stripeCheckoutSessionId: checkoutSession.id,
+      stripePaymentIntentId: typeof checkoutSession.payment_intent === 'string'
+        ? checkoutSession.payment_intent
+        : checkoutSession.payment_intent?.id,
+      amountPaid: paidAmount,
+      paymentCurrency: checkoutSession.currency
     };
 
     if (mintResult.tokenId !== null && mintResult.tokenId !== undefined) {
@@ -205,7 +267,14 @@ export async function POST(req) {
     } catch (saveError) {
       if (saveError.code === 11000) {
         const duplicateField = Object.keys(saveError.keyPattern || {})[0];
-        if (duplicateField === 'txHash') {
+        if (duplicateField === 'stripeCheckoutSessionId') {
+          const existingTicket = await Ticket.findOne({ stripeCheckoutSessionId: checkoutSession.id });
+          return new Response(JSON.stringify({
+            success: true,
+            ticket: existingTicket,
+            alreadyProcessed: true
+          }), { status: 200 });
+        } else if (duplicateField === 'txHash') {
 
           const existingTicket = await Ticket.findOne({ txHash: mintResult.txHash });
           await rollbackPurchase();
@@ -224,6 +293,7 @@ export async function POST(req) {
       throw saveError;
     }
 
+<<<<<<< HEAD
     try {
       await WaitlistEntry.updateMany(
         { eventId: updatedEvent._id, userId, status: { $ne: 'purchased' } },
@@ -231,6 +301,11 @@ export async function POST(req) {
       );
     } catch (err) {
       console.warn('Failed to update waitlist status:', err);
+=======
+    event.remainingTickets -= 1;
+    if (checkoutSession.metadata?.earlyBirdActive === 'true' && event.earlyBird?.enabled) {
+      event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1;
+>>>>>>> bad86bf (feat: integrate stripe and ticket metadata logic)
     }
 
     // Remove from waitlist after purchase (requested behavior)

@@ -12,6 +12,8 @@ const ABI = [
     "event TicketMinted(uint256 indexed tokenId, address indexed to, string uri)"
 ];
 
+
+
 // Contract address is safe to expose, but server routes also run in Node on Vercel.
 // Support both NEXT_PUBLIC_* and server-only naming.
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || process.env.CONTRACT_ADDRESS;

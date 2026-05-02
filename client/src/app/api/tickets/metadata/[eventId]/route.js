@@ -5,7 +5,7 @@ import Event from '@/models/Event';
 export async function GET(req, { params }) {
     try {
         await dbConnect();
-        const { eventId } = params;
+        const { eventId } = await params;
 
         const event = await Event.findById(eventId);
         if (!event) {
@@ -24,16 +24,20 @@ export async function GET(req, { params }) {
         const inferredBaseUrl = host ? `${protocol}://${host}` : null;
         const baseUrl = configuredBaseUrl || inferredBaseUrl;
 
-        const imageValue = (event.image || '').trim();
-        const imageUrl = /^https?:\/\//i.test(imageValue)
-            ? imageValue
-            : (baseUrl && imageValue ? `${baseUrl}${imageValue.startsWith('/') ? '' : '/'}${imageValue}` : "");
+        const imageVersion = event.updatedAt
+            ? new Date(event.updatedAt).getTime()
+            : new Date(event.createdAt || event.date || Date.now()).getTime();
+        const nftImageUrl = baseUrl
+            ? `${baseUrl}/api/tickets/metadata/${eventId}/image?v=${imageVersion}`
+            : "";
 
         // Standard OpenSea / ERC-721 metadata JSON
         const metadata = {
             name: `${event.event} Ticket`,
             description: `Official ticket for ${event.event} at ${event.location} on ${new Date(event.date).toLocaleDateString()}.`,
-            image: imageUrl || (baseUrl ? `${baseUrl}/default-ticket.png` : ""),
+            image: nftImageUrl,
+            image_url: nftImageUrl,
+            external_url: baseUrl ? `${baseUrl}/event/${event.eventId}` : "",
             attributes: [
                 { trait_type: "Event", value: event.event },
                 { trait_type: "Location", value: event.location },
