@@ -238,8 +238,17 @@ export default function Dashboard() {
   // Derived data
   const ticketStats = useMemo(() => {
     const now = new Date();
-    const upcoming = tickets.filter(t => t.eventId?.date && new Date(t.eventId.date) >= now);
-    const past = tickets.filter(t => t.eventId?.date && new Date(t.eventId.date) < now);
+    // A ticket is "past" if its event date has passed OR if it has been scanned/used
+    const upcoming = tickets.filter(t => {
+      const isScannedOrUsed = t.isRedeemed === true || t.status === 'used';
+      const eventExpired = t.eventId?.date && new Date(t.eventId.date) < now;
+      return t.eventId?.date && !isScannedOrUsed && !eventExpired;
+    });
+    const past = tickets.filter(t => {
+      const isScannedOrUsed = t.isRedeemed === true || t.status === 'used';
+      const eventExpired = t.eventId?.date && new Date(t.eventId.date) < now;
+      return isScannedOrUsed || eventExpired;
+    });
     const spent = tickets.reduce((sum, t) => sum + (t.eventId?.price || 0), 0);
 
     return { upcoming, past, spent };
