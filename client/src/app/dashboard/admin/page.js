@@ -59,7 +59,6 @@ function AdminTabs() {
     { key: "users", label: "Attendees" },
     { key: "organizers", label: "Organizers" },
     { key: "approvals", label: "Approvals" },
-    { key: "events", label: "Events" },
     { key: "scanner", label: "Ticket Scanner" },
   ];
 
@@ -496,60 +495,7 @@ function AdminTabs() {
             </div>
           )}
 
-          {/* EVENTS (UNCHANGED LOGIC) */}
-          {active === "events" && (
-            <div>
-              <h2 className={`text-2xl font-bold ${strongText} mb-6`}>Event Management</h2>
-              {events.length === 0 ? (
-                <div className={`text-center py-12 ${mutedText}`}>No events created yet.</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {events.map((event) => {
-                    const soldOut = event.remainingTickets === 0;
-                    const availability = ((event.totalTickets - event.remainingTickets) / event.totalTickets) * 100;
-
-                    return (
-                      <div key={event._id} className={glassCard}>
-                        <h3 className={`font-bold ${strongText} text-lg mb-3 line-clamp-1`}>{event.event}</h3>
-
-                        <div className="mb-4">
-                          <div className={`flex justify-between text-sm ${mutedText2} mb-1`}>
-                            <span>Tickets</span>
-                            <span>{event.remainingTickets} left</span>
-                          </div>
-                          <div className="w-full bg-white/10 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${soldOut ? "bg-red-500" : availability > 80 ? "bg-orange-500" : "bg-green-500"
-                                }`}
-                              style={{ width: `${100 - availability}%` }}
-                            ></div>
-                          </div>
-                          <p className={`text-xs ${mutedText} mt-1`}>
-                            {event.totalTickets - event.remainingTickets} sold of {event.totalTickets}
-                          </p>
-                        </div>
-
-                        <div className="flex gap-2 mt-4">
-                          <button
-                            onClick={() => updateEvent(event._id)}
-                            className="flex-1 py-2 text-sm font-medium bg-[#FFA500] text-white rounded-lg hover:bg-[#FFA500] transition-colors"
-                          >
-                            Update
-                          </button>
-                          <button
-                            onClick={() => deleteEvent(event._id)}
-                            className="p-2 rounded-lg bg-red-400 text-white hover:bg-red-600 hover:scale-105 transition duration-200 shadow-sm"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          
 
           {/* APPROVAL REQUESTS */}
           {active === 'approvals' && (

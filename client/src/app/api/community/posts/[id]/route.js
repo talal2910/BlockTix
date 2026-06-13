@@ -1,16 +1,27 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import CommunityPost from '@/models/CommunityPost';
 import CommunityComment from '@/models/CommunityComment';
 import CommunityLike from '@/models/CommunityLike';
 
+function buildPostFilter(id) {
+  const filter = { postId: id };
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return { $or: [filter, { _id: id }] };
+  }
+
+  return filter;
+}
+
 export async function GET(req, { params }) {
   try {
     await dbConnect();
 
-    const { id } = params;
+    const { id } = await params;
 
-    const post = await CommunityPost.findOne({ postId: id }).lean();
+    const post = await CommunityPost.findOne(buildPostFilter(id)).lean();
     if (!post) {
       return NextResponse.json(
         { success: false, error: 'Post not found' },
@@ -41,11 +52,11 @@ export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(req.url);
     const firebase_uid = searchParams.get('firebase_uid');
 
-    const post = await CommunityPost.findOne({ postId: id });
+    const post = await CommunityPost.findOne(buildPostFilter(id));
     if (!post) {
       return NextResponse.json(
         { success: false, error: 'Post not found' },
@@ -60,7 +71,7 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    await CommunityPost.deleteOne({ postId: id });
+    await CommunityPost.deleteOne(buildPostFilter(id));
     await CommunityComment.deleteMany({ postId: id });
     await CommunityLike.deleteMany({ postId: id });
 

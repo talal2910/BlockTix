@@ -93,7 +93,7 @@ export default function CommunityPage() {
             <div className="space-y-4">
               {posts.map((post) => (
                 <CommunityPost
-                  key={post.postId}
+                  key={post.postId || post._id}
                   post={post}
                   currentUser={user}
                   onDelete={handlePostDeleted}

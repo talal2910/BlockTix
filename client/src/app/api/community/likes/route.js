@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import CommunityLike from '@/models/CommunityLike';
 import CommunityPost from '@/models/CommunityPost';
+
+function buildPostFilter(postId) {
+  const filter = { postId };
+
+  if (mongoose.Types.ObjectId.isValid(postId)) {
+    return { $or: [filter, { _id: postId }] };
+  }
+
+  return filter;
+}
 
 export async function POST(req) {
   try {
@@ -16,7 +27,7 @@ export async function POST(req) {
       );
     }
 
-    const post = await CommunityPost.findOne({ postId });
+    const post = await CommunityPost.findOne(buildPostFilter(postId));
     if (!post) {
       return NextResponse.json(
         { success: false, error: 'Post not found' },

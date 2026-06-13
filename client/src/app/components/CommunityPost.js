@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FaHeart, FaRegHeart, FaComment, FaTrash } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import Skeleton from './Skeleton';
 
@@ -15,6 +15,7 @@ export default function CommunityPost({ post, currentUser, onDelete, onLikeChang
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const [addingComment, setAddingComment] = useState(false);
+  const postIdentifier = post.postId || post._id;
 
   const isAuthor = currentUser?.uid === post.firebase_uid;
 
@@ -28,7 +29,7 @@ export default function CommunityPost({ post, currentUser, onDelete, onLikeChang
       const res = await fetch('/api/community/likes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.postId, firebase_uid: currentUser.uid }),
+        body: JSON.stringify({ postId: postIdentifier, firebase_uid: currentUser.uid }),
       });
 
       const data = await res.json();
@@ -55,7 +56,7 @@ export default function CommunityPost({ post, currentUser, onDelete, onLikeChang
     setShowAllComments(false);
     setLoadingComments(true);
     try {
-      const res = await fetch(`/api/community/comments?postId=${post.postId}`);
+      const res = await fetch(`/api/community/comments?postId=${postIdentifier}`);
       const data = await res.json();
       if (data.success) {
         const fetchedComments = data.comments || [];
@@ -86,7 +87,7 @@ export default function CommunityPost({ post, currentUser, onDelete, onLikeChang
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId: post.postId,
+          postId: postIdentifier,
           firebase_uid: currentUser.uid,
           content: newComment,
         }),
@@ -109,24 +110,47 @@ export default function CommunityPost({ post, currentUser, onDelete, onLikeChang
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Delete this post?')) {
-      try {
-        const res = await fetch(
-          `/api/community/posts/${post.postId}?firebase_uid=${currentUser.uid}`,
-          { method: 'DELETE' }
-        );
+    toast.custom((t) => (
+      <div className="w-[320px] rounded-2xl border border-white/10 bg-white p-4 shadow-2xl">
+        <div className="text-black font-semibold">Delete this post?</div>
+        <p className="mt-1 text-sm text-black/70">
+          This action cannot be undone.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="rounded-lg px-3 bg-white/30 py-2 text-sm text-black transition hover:bg-green-500 hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
 
-        const data = await res.json();
-        if (data.success) {
-          toast.success('Post deleted');
-          onDelete?.();
-        } else {
-          toast.error(data.error);
-        }
-      } catch {
-        toast.error('Failed to delete post');
-      }
-    }
+              try {
+                const res = await fetch(
+                  `/api/community/posts/${postIdentifier}?firebase_uid=${currentUser.uid}`,
+                  { method: 'DELETE' }
+                );
+
+                const data = await res.json();
+                if (data.success) {
+                  toast.success('Post deleted');
+                  onDelete?.();
+                } else {
+                  toast.error(data.error);
+                }
+              } catch {
+                toast.error('Failed to delete post');
+              }
+            }}
+            className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ));
   };
 
   const visibleComments = showAllComments ? comments : comments.slice(0, 2);
@@ -159,10 +183,10 @@ export default function CommunityPost({ post, currentUser, onDelete, onLikeChang
         {isAuthor && (
           <button
             onClick={handleDelete}
-            className="text-red-500 hover:text-red-400 transition"
+           className="p-2 rounded-lg bg-red-400 text-white hover:bg-red-600 hover:scale-105 transition duration-200 shadow-sm"
             title="Delete post"
           >
-            <FaTrash size={16} />
+           🗑️
           </button>
         )}
       </div>
