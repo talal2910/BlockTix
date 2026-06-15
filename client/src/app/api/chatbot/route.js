@@ -39,7 +39,7 @@ function findFaqAnswer(message) {
 }
 
 const keywords = [
-  { keywords: ['hi', 'hello', 'greetings', 'how are you'], getReply: () => findFaqAnswer('hi') || 'Hi! How can I help you today?' },
+  { keywords: ['hi', 'hello','hey', 'greetings', 'how are you'], getReply: () => findFaqAnswer('hi') || 'Hi! How can I help you today?' },
   { keywords: ['refund', 'cancel', 'cancellation'], getReply: () => findFaqAnswer('refund') || 'Refunds/cancellations depend on the event organizer policy. Share the event name and what happened and I can guide you.' },
   { keywords: ['buy', 'purchase', 'how to buy', 'get tickets'], getReply: () => kb?.faq?.find((f) => f.question.includes('buy'))?.answer },
   { keywords: ['where are', 'find my ticket', 'my tickets'], getReply: () => kb?.faq?.find((f) => f.question.includes('Where are'))?.answer },
