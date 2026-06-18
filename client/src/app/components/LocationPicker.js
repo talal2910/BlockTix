@@ -34,8 +34,11 @@ function FlyToLocation({ coords }) {
   return null;
 }
 
-export default function LocationPicker({ setCoordinates }) {
-  const [markerPos, setMarkerPos] = useState([24.8607, 67.0011]); // default Karachi
+export default function LocationPicker({ value, setCoordinates }) {
+  const initialPosition = value?.lat != null && value?.lng != null
+    ? [value.lat, value.lng]
+    : [24.8607, 67.0011];
+  const [markerPos, setMarkerPos] = useState(initialPosition); // default Karachi
   const [flyPos, setFlyPos] = useState(null);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -47,6 +50,13 @@ export default function LocationPicker({ setCoordinates }) {
     setFlyPos(coords);
     setCoordinates?.({ lat, lng });
   };
+
+  useEffect(() => {
+    if (value?.lat == null || value?.lng == null) return;
+    const coords = [value.lat, value.lng];
+    setMarkerPos(coords);
+    setFlyPos(coords);
+  }, [value?.lat, value?.lng]);
 
   // Fetch suggestions from Nominatim (Pakistan only)
   useEffect(() => {
@@ -145,7 +155,7 @@ export default function LocationPicker({ setCoordinates }) {
 
       {/* MAP */}
       <MapContainer
-        center={[24.8607, 67.0011]}
+        center={initialPosition}
         zoom={13}
         className="w-full h-[300px] md:h-[400px] lg:h-[500px] rounded-xl"
       >

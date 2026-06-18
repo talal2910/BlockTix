@@ -7,7 +7,7 @@ const VALID_CATEGORIES = ["Art", "Sports", "Food And Drink", "Education", "Festi
 export async function POST(req) {
     try {
         await dbConnect();
-        const { firebase_uid, categories, city } = await req.json();
+        const { firebase_uid, categories, city, location } = await req.json();
 
         if (!firebase_uid) {
             return NextResponse.json({ success: false, message: 'firebase_uid is required' }, { status: 400 });
@@ -21,6 +21,14 @@ export async function POST(req) {
 
         if (city !== undefined) {
             update.city = city?.trim() || null;
+        }
+
+        if (location !== undefined) {
+            const lat = Number(location?.lat);
+            const lng = Number(location?.lng);
+            update.location = Number.isFinite(lat) && Number.isFinite(lng)
+                ? { lat, lng }
+                : { lat: null, lng: null };
         }
 
         const user = await User.findOneAndUpdate(
@@ -37,6 +45,7 @@ export async function POST(req) {
             success: true,
             preferredCategories: user.preferredCategories,
             city: user.city,
+            location: user.location || null,
         });
 
     } catch (error) {
@@ -55,7 +64,7 @@ export async function GET(req) {
             return NextResponse.json({ success: false, message: 'firebase_uid is required' }, { status: 400 });
         }
 
-        const user = await User.findOne({ firebase_uid }).select('preferredCategories city').lean();
+        const user = await User.findOne({ firebase_uid }).select('preferredCategories city location').lean();
 
         if (!user) {
             return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
@@ -65,6 +74,7 @@ export async function GET(req) {
             success: true,
             preferredCategories: user.preferredCategories || [],
             city: user.city || null,
+            location: user.location || null,
         });
 
     } catch (error) {
